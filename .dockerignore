@@ -1,0 +1,12 @@
+**/bin/
+**/obj/
+.git/
+.idea/
+.vs/
+TestResults/
+coverage/
+*.user
+*.suo
+*.log
+prometheus-data/
+grafana-data/

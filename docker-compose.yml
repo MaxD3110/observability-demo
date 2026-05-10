@@ -1,0 +1,90 @@
+services:
+  financial-nano-gateway:
+    build:
+      context: .
+      dockerfile: src/FinancialNanoGateway/Dockerfile
+    container_name: financial-nano-gateway
+    ports:
+      - "8080:8080"
+    environment:
+      ASPNETCORE_ENVIRONMENT: Development
+      OTEL_SERVICE_NAME: financial-nano-gateway
+      OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
+      OTEL_EXPORTER_OTLP_PROTOCOL: grpc
+      BankIntegrationOptions__ProviderName: MockBank
+      BankIntegrationOptions__FailureRatePercentage: 10
+      BankIntegrationOptions__MinRequestDelayMs: 50
+      BankIntegrationOptions__MaxRequestDelayMs: 500
+    depends_on:
+      - otel-collector
+
+  otel-collector:
+    image: otel/opentelemetry-collector-contrib:0.128.0
+    container_name: otel-collector
+    command: ["--config=/etc/otelcol/config.yaml"]
+    ports:
+      - "4317:4317"
+      - "4318:4318"
+      - "8889:8889"
+    volumes:
+      - ./observability/otel-collector.yaml:/etc/otelcol/config.yaml:ro
+
+  prometheus:
+    image: prom/prometheus:v3.5.0
+    container_name: prometheus
+    command:
+      - "--config.file=/etc/prometheus/prometheus.yml"
+      - "--storage.tsdb.path=/prometheus"
+      - "--web.console.libraries=/usr/share/prometheus/console_libraries"
+      - "--web.console.templates=/usr/share/prometheus/consoles"
+    ports:
+      - "9090:9090"
+    volumes:
+      - ./observability/prometheus.yml:/etc/prometheus/prometheus.yml:ro
+      - prometheus-data:/prometheus
+    depends_on:
+      - otel-collector
+
+  grafana:
+    image: grafana/grafana:12.2.0
+    container_name: grafana
+    ports:
+      - "3000:3000"
+    environment:
+      GF_SECURITY_ADMIN_USER: admin
+      GF_SECURITY_ADMIN_PASSWORD: admin
+      GF_AUTH_ANONYMOUS_ENABLED: "true"
+      GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
+      GF_USERS_DEFAULT_THEME: light
+    volumes:
+      - grafana-data:/var/lib/grafana
+      - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
+      - ./observability/grafana/dashboards:/var/lib/grafana/dashboards:ro
+    depends_on:
+      - prometheus
+
+  payment-load-generator:
+    image: curlimages/curl:8.10.1
+    container_name: payment-load-generator
+    depends_on:
+      - financial-nano-gateway
+    command:
+      - /bin/sh
+      - -c
+      - |
+        until curl -sf http://financial-nano-gateway:8080/swagger/v1/swagger.json > /dev/null; do
+          sleep 2
+        done
+        while true; do
+          amount=$$(awk 'BEGIN { srand(); printf "%.2f", 1 + rand() * 250 }')
+          currency=$$(awk 'BEGIN { split("USD EUR GBP", c, " "); srand(); print c[int(rand() * 3) + 1] }')
+          curl -s -o /dev/null -w "%{http_code}\n" \
+            -H "Content-Type: application/json" \
+            -d "{\"amount\":$${amount},\"currency\":\"$${currency}\"}" \
+            http://financial-nano-gateway:8080/api/payments
+          sleep 0.2
+        done
+
+volumes:
+  prometheus-data:
+  grafana-data:
