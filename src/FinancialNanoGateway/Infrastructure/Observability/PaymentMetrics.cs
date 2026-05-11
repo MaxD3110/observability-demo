@@ -9,87 +9,98 @@ public sealed class PaymentMetrics : IPaymentMetrics
 {
     public const string MeterName = "FinancialNanoGateway.Payments";
 
+    private const string CurrencyTag = "currency";
+    private const string ProviderTag = "provider";
+    private const string OutcomeTag = "outcome";
+    private const string ReasonTag = "reason";
+    private const string SuccessOutcome = "success";
+    private const string FailedOutcome = "failed";
+
     private readonly Counter<long> _paymentRequests;
     private readonly Counter<long> _paymentEnqueued;
     private readonly Counter<long> _paymentProcessed;
     private readonly Counter<long> _paymentFailed;
     private readonly Counter<double> _paymentValue;
-    private readonly UpDownCounter<int> _queueChanges;
-    private readonly UpDownCounter<int> _activeProcessingChanges;
     private readonly Histogram<double> _paymentAmount;
+    private readonly Histogram<double> _paymentQueueWaitDuration;
     private readonly Histogram<double> _paymentProcessingDuration;
     private readonly Histogram<double> _bankRequestDuration;
+
+    // Observable instruments должны жить столько же, сколько Meter. Поэтому храним ссылки в полях,
+    // даже если дальше напрямую к ним не обращаемся.
     private readonly ObservableGauge<int> _queueDepth;
-    private readonly ObservableUpDownCounter<int> _activeProcessing;
-    private readonly ObservableCounter<long> _lifetimeProcessed;
+    private readonly ObservableGauge<int> _activeProcessing;
 
     private int _currentQueueDepth;
     private int _currentActiveProcessing;
-    private long _processedPayments;
 
     public PaymentMetrics(IMeterFactory meterFactory)
     {
         var meter = meterFactory.Create(MeterName);
-        
+
+        // Counter подходит для событий, которые только увеличиваются.
         _paymentRequests = meter.CreateCounter<long>(
             "payment_requests",
-            description: "Number of payment requests accepted by the API layer.");
+            unit: "{payment}",
+            description: "Количество валидных платежных запросов, принятых API.");
 
         _paymentEnqueued = meter.CreateCounter<long>(
             "payment_enqueued",
-            description: "Number of payments successfully added to the processing queue.");
+            unit: "{payment}",
+            description: "Количество платежей, успешно поставленных в очередь.");
 
         _paymentProcessed = meter.CreateCounter<long>(
             "payment_processed",
-            description: "Number of payments processed by the background worker.");
+            unit: "{payment}",
+            description: "Количество платежей, обработанных background worker.");
 
         _paymentFailed = meter.CreateCounter<long>(
             "payment_failed",
-            description: "Number of payment processing failures.");
+            unit: "{payment}",
+            description: "Количество платежей, завершившихся ошибкой.");
 
         _paymentValue = meter.CreateCounter<double>(
             "payment_value",
-            description: "Total monetary value of successfully processed payments.");
+            description: "Суммарная стоимость успешно обработанных платежей. Валюта передается label-ом.");
 
-        _queueChanges = meter.CreateUpDownCounter<int>(
-            "payment_queue_changes",
-            description: "Queue length changes. Positive values enqueue payments; negative values dequeue them.");
-
-        _activeProcessingChanges = meter.CreateUpDownCounter<int>(
-            "payment_active_processing_changes",
-            description: "Active payment processing changes.");
-
+        // Histogram нужен для распределений: по нему считаются p50/p95/p99, а не только среднее.
         _paymentAmount = meter.CreateHistogram<double>(
             "payment_amount",
-            description: "Distribution of requested payment amounts.");
+            description: "Распределение сумм входящих платежей. Валюта передается label-ом.");
+
+        _paymentQueueWaitDuration = meter.CreateHistogram<double>(
+            "payment_queue_wait_duration_ms",
+            unit: "ms",
+            description: "Сколько времени платеж провел в очереди до начала обработки.");
 
         _paymentProcessingDuration = meter.CreateHistogram<double>(
             "payment_processing_duration_ms",
-            description: "End-to-end background processing duration in milliseconds.");
+            unit: "ms",
+            description: "Полная длительность обработки платежа background worker-ом.");
 
         _bankRequestDuration = meter.CreateHistogram<double>(
             "bank_request_duration_ms",
-            description: "Mock bank request duration in milliseconds.");
+            unit: "ms",
+            description: "Длительность вызова к банковскому провайдеру.");
 
+        // Gauge показывает текущее состояние системы. В отличие от Counter, значение может расти и падать.
+        // В данном случае используется observable вариант, т.к. метрика показывает состояние системы (pull), а не событие (push).
         _queueDepth = meter.CreateObservableGauge(
             "payment_queue_depth",
-            () => Volatile.Read(ref _currentQueueDepth),
-            description: "Current number of payments waiting in the queue.");
+            () => Math.Max(0, Volatile.Read(ref _currentQueueDepth)),
+            unit: "{payment}",
+            description: "Текущее количество платежей, ожидающих обработки.");
 
-        _activeProcessing = meter.CreateObservableUpDownCounter(
+        _activeProcessing = meter.CreateObservableGauge(
             "payment_active_processing",
-            () => Volatile.Read(ref _currentActiveProcessing),
-            description: "Current number of payments being processed.");
-
-        _lifetimeProcessed = meter.CreateObservableCounter(
-            "payment_lifetime_processed",
-            () => Volatile.Read(ref _processedPayments),
-            description: "Current process lifetime count of processed payments.");
+            () => Math.Max(0, Volatile.Read(ref _currentActiveProcessing)),
+            unit: "{payment}",
+            description: "Текущее количество платежей, которые обрабатываются прямо сейчас.");
     }
 
     public void PaymentRequested(Payment payment)
     {
-        var tags = Currency(payment);
+        var tags = CreatePaymentTags(payment);
 
         _paymentRequests.Add(1, tags);
         _paymentAmount.Record((double)payment.Amount, tags);
@@ -98,72 +109,92 @@ public sealed class PaymentMetrics : IPaymentMetrics
     public void PaymentEnqueued(Payment payment)
     {
         Interlocked.Increment(ref _currentQueueDepth);
-
-        _paymentEnqueued.Add(1, Currency(payment));
-        _queueChanges.Add(1);
+        _paymentEnqueued.Add(1, CreatePaymentTags(payment));
     }
 
     public void PaymentDequeued(Payment payment)
     {
         Interlocked.Decrement(ref _currentQueueDepth);
-        _queueChanges.Add(-1);
+
+        var queueWaitDuration = DateTime.UtcNow - payment.CreatedAt;
+        if (queueWaitDuration >= TimeSpan.Zero)
+        {
+            _paymentQueueWaitDuration.Record(queueWaitDuration.TotalMilliseconds, CreatePaymentTags(payment));
+        }
     }
 
     public void PaymentProcessingStarted(Payment payment)
     {
         Interlocked.Increment(ref _currentActiveProcessing);
-        _activeProcessingChanges.Add(1);
     }
 
     public void PaymentProcessingCompleted(Payment payment, TimeSpan duration)
     {
         Interlocked.Decrement(ref _currentActiveProcessing);
-        Interlocked.Increment(ref _processedPayments);
 
-        _activeProcessingChanges.Add(-1);
-        _paymentProcessed.Add(1, WithStatus(Currency(payment), "success"));
-        _paymentValue.Add((double)payment.Amount, Currency(payment));
-        _paymentProcessingDuration.Record(duration.TotalMilliseconds, WithStatus(Currency(payment), "success"));
+        var tags = CreatePaymentTags(payment, outcome: SuccessOutcome);
+        _paymentProcessed.Add(1, tags);
+        _paymentValue.Add((double)payment.Amount, CreatePaymentTags(payment));
+        _paymentProcessingDuration.Record(duration.TotalMilliseconds, tags);
     }
 
     public void PaymentProcessingFailed(Payment payment, string reason, TimeSpan duration)
     {
         Interlocked.Decrement(ref _currentActiveProcessing);
-        Interlocked.Increment(ref _processedPayments);
 
-        _activeProcessingChanges.Add(-1);
-        _paymentProcessed.Add(1, WithStatus(Currency(payment), "failed"));
-        _paymentFailed.Add(1, WithReason(Currency(payment), reason));
-        _paymentProcessingDuration.Record(duration.TotalMilliseconds, WithStatus(Currency(payment), "failed"));
+        var outcomeTags = CreatePaymentTags(payment, outcome: FailedOutcome);
+        var failureTags = CreatePaymentTags(payment, reason: reason);
+
+        _paymentProcessed.Add(1, outcomeTags);
+        _paymentFailed.Add(1, failureTags);
+        _paymentProcessingDuration.Record(duration.TotalMilliseconds, outcomeTags);
     }
 
     public void BankRequestCompleted(Payment payment, string provider, bool succeeded, TimeSpan duration)
     {
-        var tags = new TagList
-        {
-            { "currency", payment.Currency },
-            { "provider", provider },
-            { "outcome", succeeded ? "success" : "failed" }
-        };
+        var tags = CreatePaymentTags(
+            payment,
+            provider: provider,
+            outcome: succeeded ? SuccessOutcome : FailedOutcome);
 
         _bankRequestDuration.Record(duration.TotalMilliseconds, tags);
     }
-
-    private static TagList Currency(Payment payment) =>
-        new()
+    
+    /// <summary>
+    /// Добавляем дополнительные labels для метрик, чтобы иметь возможность создать более детальный дашборд,
+    /// не создавая миллион однотипных метрик под незначительно отличающийся контекст.
+    /// </summary>
+    /// <returns>TagList - легковесная структура, не занимающая heap</returns>
+    private static TagList CreatePaymentTags(
+        Payment payment,
+        string? provider = null,
+        string? outcome = null,
+        string? reason = null)
+    {
+        // Labels должны быть низкокардинальными. Currency/provider/outcome/reason подходят для этого.
+        // ВАЖНО! Не добавляем payment.Id, userId, requestId и другие уникальные значения: они взорвут cardinality в Prometheus.
+        // Prometheus сохраняет временной ряд для каждого тэга. Если уникальных тэгов станет слишком много - память будет исчерпана.
+        // Тэги должны быть категориями, по которым группируются данные, а не уникальными идентификаторами.
+        var tags = new TagList
         {
-            { "currency", payment.Currency }
+            { CurrencyTag, payment.Currency }
         };
 
-    private static TagList WithStatus(TagList tags, string status)
-    {
-        tags.Add("status", status);
-        return tags;
-    }
+        if (!string.IsNullOrWhiteSpace(provider))
+        {
+            tags.Add(ProviderTag, provider);
+        }
 
-    private static TagList WithReason(TagList tags, string reason)
-    {
-        tags.Add("reason", reason);
+        if (!string.IsNullOrWhiteSpace(outcome))
+        {
+            tags.Add(OutcomeTag, outcome);
+        }
+
+        if (!string.IsNullOrWhiteSpace(reason))
+        {
+            tags.Add(ReasonTag, reason);
+        }
+
         return tags;
     }
 }
