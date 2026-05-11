@@ -33,6 +33,12 @@ public static class ServiceCollectionExtensions
                             Boundaries = [1, 5, 10, 25, 50, 100, 250, 500, 1_000]
                         })
                     .AddView(
+                        "payment_queue_wait_duration_ms",
+                        new ExplicitBucketHistogramConfiguration
+                        {
+                            Boundaries = [1, 5, 10, 25, 50, 100, 250, 500, 1_000, 2_000]
+                        })
+                    .AddView(
                         "payment_processing_duration_ms",
                         new ExplicitBucketHistogramConfiguration
                         {

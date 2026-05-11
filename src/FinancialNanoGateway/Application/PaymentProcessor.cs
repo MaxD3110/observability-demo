@@ -41,7 +41,7 @@ public sealed class PaymentProcessor : BackgroundService
 
         try
         {
-            var index = Random.Shared.NextInt64(0, _bankIntegrationServices.Length - 1);
+            var index = Random.Shared.Next(_bankIntegrationServices.Length);
             await _bankIntegrationServices[index].ProcessPaymentAsync(payment, cancellationToken);
 
             _metrics.PaymentProcessingCompleted(payment, stopwatch.Elapsed);

@@ -13,8 +13,8 @@ builder.Services.AddObservability();
 builder.Services.AddApplicationOptions(builder.Configuration);
 builder.Services.AddSwagger();
 
-builder.Services.AddScoped<IBankIntegrationService, BankAIntegrationService>();
-builder.Services.AddScoped<IBankIntegrationService, BankBIntegrationService>();
+builder.Services.AddSingleton<IBankIntegrationService, BankAIntegrationService>();
+builder.Services.AddSingleton<IBankIntegrationService, BankBIntegrationService>();
 
 builder.Services.AddSingleton<IPaymentQueue, PaymentQueue>();
 builder.Services.AddSingleton<IPaymentMetrics, PaymentMetrics>();

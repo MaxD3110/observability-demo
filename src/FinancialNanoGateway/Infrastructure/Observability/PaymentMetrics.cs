@@ -21,6 +21,7 @@ public sealed class PaymentMetrics : IPaymentMetrics
     private readonly Counter<long> _paymentProcessed;
     private readonly Counter<long> _paymentFailed;
     private readonly Counter<double> _paymentValue;
+    private readonly Counter<double> _bankRequestValue;
     private readonly Histogram<double> _paymentAmount;
     private readonly Histogram<double> _paymentQueueWaitDuration;
     private readonly Histogram<double> _paymentProcessingDuration;
@@ -61,7 +62,11 @@ public sealed class PaymentMetrics : IPaymentMetrics
 
         _paymentValue = meter.CreateCounter<double>(
             "payment_value",
-            description: "Суммарная стоимость успешно обработанных платежей. Валюта передается label-ом.");
+            description: "Суммарная стоимость платежей по результату обработки. Валюта и outcome передаются labels.");
+
+        _bankRequestValue = meter.CreateCounter<double>(
+            "bank_request_value",
+            description: "Суммарная стоимость платежей по банковскому провайдеру и результату вызова.");
 
         // Histogram нужен для распределений: по нему считаются p50/p95/p99, а не только среднее.
         _paymentAmount = meter.CreateHistogram<double>(
@@ -134,7 +139,7 @@ public sealed class PaymentMetrics : IPaymentMetrics
 
         var tags = CreatePaymentTags(payment, outcome: SuccessOutcome);
         _paymentProcessed.Add(1, tags);
-        _paymentValue.Add((double)payment.Amount, CreatePaymentTags(payment));
+        _paymentValue.Add((double)payment.Amount, tags);
         _paymentProcessingDuration.Record(duration.TotalMilliseconds, tags);
     }
 
@@ -147,6 +152,7 @@ public sealed class PaymentMetrics : IPaymentMetrics
 
         _paymentProcessed.Add(1, outcomeTags);
         _paymentFailed.Add(1, failureTags);
+        _paymentValue.Add((double)payment.Amount, outcomeTags);
         _paymentProcessingDuration.Record(duration.TotalMilliseconds, outcomeTags);
     }
 
@@ -158,6 +164,7 @@ public sealed class PaymentMetrics : IPaymentMetrics
             outcome: succeeded ? SuccessOutcome : FailedOutcome);
 
         _bankRequestDuration.Record(duration.TotalMilliseconds, tags);
+        _bankRequestValue.Add((double)payment.Amount, tags);
     }
     
     /// <summary>
