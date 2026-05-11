@@ -1,5 +1,5 @@
-﻿using FinancialNanoGateway.Infrastructure.Options;
-using FinancialNanoGateway.Infrastructure.Telemetry;
+﻿using FinancialNanoGateway.Infrastructure.Observability;
+using FinancialNanoGateway.Infrastructure.Options;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 
@@ -9,7 +9,7 @@ public static class ServiceCollectionExtensions
 {
     extension(IServiceCollection services)
     {
-        public void AddTelemetry()
+        public void AddObservability()
         {
             var openTelemetry = services.AddOpenTelemetry()
                 .ConfigureResource(resource =>

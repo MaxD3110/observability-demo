@@ -3,13 +3,12 @@ using System.Diagnostics.Metrics;
 using FinancialNanoGateway.Application.Abstractions;
 using FinancialNanoGateway.Domain.Models;
 
-namespace FinancialNanoGateway.Infrastructure.Telemetry;
+namespace FinancialNanoGateway.Infrastructure.Observability;
 
-public sealed class PaymentMetrics : IPaymentMetrics, IDisposable
+public sealed class PaymentMetrics : IPaymentMetrics
 {
     public const string MeterName = "FinancialNanoGateway.Payments";
 
-    private readonly Meter _meter = new(MeterName, "1.0.0");
     private readonly Counter<long> _paymentRequests;
     private readonly Counter<long> _paymentEnqueued;
     private readonly Counter<long> _paymentProcessed;
@@ -28,59 +27,61 @@ public sealed class PaymentMetrics : IPaymentMetrics, IDisposable
     private int _currentActiveProcessing;
     private long _processedPayments;
 
-    public PaymentMetrics()
+    public PaymentMetrics(IMeterFactory meterFactory)
     {
-        _paymentRequests = _meter.CreateCounter<long>(
+        var meter = meterFactory.Create(MeterName);
+        
+        _paymentRequests = meter.CreateCounter<long>(
             "payment_requests",
             description: "Number of payment requests accepted by the API layer.");
 
-        _paymentEnqueued = _meter.CreateCounter<long>(
+        _paymentEnqueued = meter.CreateCounter<long>(
             "payment_enqueued",
             description: "Number of payments successfully added to the processing queue.");
 
-        _paymentProcessed = _meter.CreateCounter<long>(
+        _paymentProcessed = meter.CreateCounter<long>(
             "payment_processed",
             description: "Number of payments processed by the background worker.");
 
-        _paymentFailed = _meter.CreateCounter<long>(
+        _paymentFailed = meter.CreateCounter<long>(
             "payment_failed",
             description: "Number of payment processing failures.");
 
-        _paymentValue = _meter.CreateCounter<double>(
+        _paymentValue = meter.CreateCounter<double>(
             "payment_value",
             description: "Total monetary value of successfully processed payments.");
 
-        _queueChanges = _meter.CreateUpDownCounter<int>(
+        _queueChanges = meter.CreateUpDownCounter<int>(
             "payment_queue_changes",
             description: "Queue length changes. Positive values enqueue payments; negative values dequeue them.");
 
-        _activeProcessingChanges = _meter.CreateUpDownCounter<int>(
+        _activeProcessingChanges = meter.CreateUpDownCounter<int>(
             "payment_active_processing_changes",
             description: "Active payment processing changes.");
 
-        _paymentAmount = _meter.CreateHistogram<double>(
+        _paymentAmount = meter.CreateHistogram<double>(
             "payment_amount",
             description: "Distribution of requested payment amounts.");
 
-        _paymentProcessingDuration = _meter.CreateHistogram<double>(
+        _paymentProcessingDuration = meter.CreateHistogram<double>(
             "payment_processing_duration_ms",
             description: "End-to-end background processing duration in milliseconds.");
 
-        _bankRequestDuration = _meter.CreateHistogram<double>(
+        _bankRequestDuration = meter.CreateHistogram<double>(
             "bank_request_duration_ms",
             description: "Mock bank request duration in milliseconds.");
 
-        _queueDepth = _meter.CreateObservableGauge(
+        _queueDepth = meter.CreateObservableGauge(
             "payment_queue_depth",
             () => Volatile.Read(ref _currentQueueDepth),
             description: "Current number of payments waiting in the queue.");
 
-        _activeProcessing = _meter.CreateObservableUpDownCounter(
+        _activeProcessing = meter.CreateObservableUpDownCounter(
             "payment_active_processing",
             () => Volatile.Read(ref _currentActiveProcessing),
             description: "Current number of payments being processed.");
 
-        _lifetimeProcessed = _meter.CreateObservableCounter(
+        _lifetimeProcessed = meter.CreateObservableCounter(
             "payment_lifetime_processed",
             () => Volatile.Read(ref _processedPayments),
             description: "Current process lifetime count of processed payments.");
@@ -146,11 +147,6 @@ public sealed class PaymentMetrics : IPaymentMetrics, IDisposable
         };
 
         _bankRequestDuration.Record(duration.TotalMilliseconds, tags);
-    }
-
-    public void Dispose()
-    {
-        _meter.Dispose();
     }
 
     private static TagList Currency(Payment payment) =>

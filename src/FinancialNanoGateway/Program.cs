@@ -1,15 +1,15 @@
 using FinancialNanoGateway;
 using FinancialNanoGateway.Application;
 using FinancialNanoGateway.Application.Abstractions;
+using FinancialNanoGateway.Infrastructure.Observability;
 using FinancialNanoGateway.Infrastructure.Services;
-using FinancialNanoGateway.Infrastructure.Telemetry;
 
 var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 builder.Services.AddEndpointsApiExplorer();
 builder.Services.AddHealthChecks();
-builder.Services.AddTelemetry();
+builder.Services.AddObservability();
 builder.Services.AddApplicationOptions(builder.Configuration);
 builder.Services.AddSwagger();
 

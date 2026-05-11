@@ -5,6 +5,6 @@ providers:
   - name: Financial Monitoring
     folder: Financial Nano Gateway
     type: file
-    allowUiUpdates: false # Дашборды read-only и не могут меняться в webUi графаны.
+    allowUiUpdates: true # false = Дашборды read-only и не могут меняться в webUi графаны.
     options:
       path: /var/lib/grafana/dashboards
