@@ -26,11 +26,11 @@ public sealed class PaymentProcessor : BackgroundService
         _logger = logger;
     }
 
-    protected override async Task ExecuteAsync(CancellationToken stoppingToken)
+    protected override async Task ExecuteAsync(CancellationToken cancellationToken)
     {
-        await foreach (var payment in _paymentQueue.ReadAllAsync(stoppingToken))
+        await foreach (var payment in _paymentQueue.ReadAllAsync(cancellationToken))
         {
-            await ProcessPaymentAsync(payment, stoppingToken);
+            await ProcessPaymentAsync(payment, cancellationToken);
         }
     }
 

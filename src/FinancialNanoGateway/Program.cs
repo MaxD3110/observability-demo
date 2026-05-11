@@ -65,13 +65,7 @@ builder.Services.AddOpenTelemetry()
 
 builder.Services
     .AddOptions<BankIntegrationOptions>()
-    .Bind(builder.Configuration.GetSection(BankIntegrationOptions.SectionName))
-    .Validate(
-        options => options.MinRequestDelayMs >= 0 &&
-                   options.MaxRequestDelayMs >= options.MinRequestDelayMs &&
-                   options.FailureRatePercentage is >= 0 and <= 100,
-        "Bank integration options must define a valid delay range and failure percentage.")
-    .ValidateOnStart();
+    .Bind(builder.Configuration.GetSection(nameof(BankIntegrationOptions)));
 
 builder.Services.AddSingleton<PaymentQueue>();
 builder.Services.AddSingleton<IPaymentQueue>(provider => provider.GetRequiredService<PaymentQueue>());

@@ -1,5 +1,6 @@
 using FinancialNanoGateway.Application.Abstractions;
 using FinancialNanoGateway.Application.Dtos;
+using FinancialNanoGateway.Application.Dtos.Response;
 using FinancialNanoGateway.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -48,11 +49,6 @@ public sealed class PaymentsController : ControllerBase
         _metrics.PaymentRequested(payment);
         await _paymentQueue.EnqueueAsync(payment, cancellationToken);
 
-        return Accepted(new
-        {
-            payment.Id,
-            Status = "Queued",
-            QueueLength = _paymentQueue.Count
-        });
+        return Accepted(new PaymentResponseDto(payment.Id, "Queued", _paymentQueue.Count));
     }
 }

@@ -1,3 +1,4 @@
+
 services:
   financial-nano-gateway:
     build:
@@ -11,7 +12,6 @@ services:
       OTEL_SERVICE_NAME: financial-nano-gateway
       OTEL_EXPORTER_OTLP_ENDPOINT: http://otel-collector:4317
       OTEL_EXPORTER_OTLP_PROTOCOL: grpc
-      BankIntegrationOptions__ProviderName: MockBank
       BankIntegrationOptions__FailureRatePercentage: 10
       BankIntegrationOptions__MinRequestDelayMs: 50
       BankIntegrationOptions__MaxRequestDelayMs: 500
@@ -55,7 +55,6 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: admin
       GF_AUTH_ANONYMOUS_ENABLED: "true"
       GF_AUTH_ANONYMOUS_ORG_ROLE: Viewer
-      GF_USERS_DEFAULT_THEME: light
     volumes:
       - grafana-data:/var/lib/grafana
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
