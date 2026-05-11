@@ -20,13 +20,10 @@ public sealed class PaymentsController : ControllerBase
     }
 
     /// <summary>
-    /// Queues a payment for asynchronous bank processing.
+    /// Создает запрос на оплату и передает в обработку.
     /// </summary>
-    /// <param name="requestDto">Payment amount and currency.</param>
-    /// <param name="cancellationToken">Request cancellation token.</param>
-    /// <returns>Accepted response with the payment id and current queue length.</returns>
-    /// <response code="202">The payment was queued.</response>
-    /// <response code="400">The payment request is invalid.</response>
+    /// <returns>Id запроса и номер в очереди</returns>
+    /// <response code="202">Запрос на оплату добавлен в очередь</response>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]

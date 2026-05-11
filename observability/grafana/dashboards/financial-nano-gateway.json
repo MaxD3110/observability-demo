@@ -3,8 +3,8 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "adxhhjv",
-    "generation": 3,
-    "creationTimestamp": "2026-05-11T16:12:18Z",
+    "generation": 2,
+    "creationTimestamp": "2026-05-11T18:39:25Z",
     "labels": {},
     "annotations": {}
   },
@@ -17,10 +17,7 @@
             "kind": "DataQuery",
             "group": "grafana",
             "version": "v0",
-            "spec": {},
-            "labels": {
-              "grafana.app/export-label": "grafana-1"
-            }
+            "spec": {}
           },
           "enable": true,
           "hide": true,
@@ -54,9 +51,6 @@
                       "spec": {
                         "expr": "sum by (currency) (increase(payment_value_total{currency=~\"$currency\", outcome=\"success\"}[$__range]))",
                         "legendFormat": "{{currency}}"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -143,9 +137,6 @@
                       "spec": {
                         "expr": "sum by (currency) (increase(payment_value_total{currency=~\"$currency\", outcome=\"failed\"}[$__range]))",
                         "legendFormat": "{{currency}}"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -234,9 +225,6 @@
                         "expr": "sum(rate(payment_value_total{currency=~\"$currency\", outcome=\"success\"}[$__range])) / clamp_min(sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"success\"}[$__range])), 0.001)",
                         "legendFormat": "средний чек",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -317,12 +305,11 @@
                       "group": "prometheus",
                       "version": "v0",
                       "spec": {
-                        "expr": "sum(increase(payment_amount_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le)",
+                        "editorMode": "code",
+                        "expr": "sum(increase(payment_amount_custom_name_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le)",
                         "format": "heatmap",
-                        "legendFormat": "{{le}}"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
+                        "legendFormat": "{{le}}",
+                        "range": true
                       }
                     },
                     "refId": "A",
@@ -420,9 +407,6 @@
                         "expr": "sum by (provider) (rate(bank_request_duration_milliseconds_count{currency=~\"$currency\", provider=~\"$provider\"}[$__range]))",
                         "legendFormat": "{{provider}}",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -543,9 +527,6 @@
                         "expr": "100 * sum by (provider) (rate(bank_request_duration_milliseconds_count{currency=~\"$currency\", provider=~\"$provider\", outcome=\"success\"}[$__range])) / clamp_min(sum by (provider) (rate(bank_request_duration_milliseconds_count{currency=~\"$currency\", provider=~\"$provider\"}[$__range])), 0.001)",
                         "legendFormat": "{{provider}}",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -600,11 +581,11 @@
                         "color": "red"
                       },
                       {
-                        "value": 95,
+                        "value": 90,
                         "color": "orange"
                       },
                       {
-                        "value": 99,
+                        "value": 98,
                         "color": "green"
                       }
                     ]
@@ -642,9 +623,6 @@
                         "expr": "histogram_quantile(0.95, sum by (provider, le) (rate(bank_request_duration_milliseconds_bucket{currency=~\"$currency\", provider=~\"$provider\"}[$__range])))",
                         "legendFormat": "{{provider}}",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -739,9 +717,6 @@
                         "expr": "histogram_quantile(0.50, sum by (provider, le) (rate(bank_request_duration_milliseconds_bucket{currency=~\"$currency\", provider=~\"$provider\"}[$__rate_interval])))",
                         "legendFormat": "{{provider}} p50",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -760,9 +735,6 @@
                         "expr": "histogram_quantile(0.95, sum by (provider, le) (rate(bank_request_duration_milliseconds_bucket{currency=~\"$currency\", provider=~\"$provider\"}[$__rate_interval])))",
                         "legendFormat": "{{provider}} p95",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -882,9 +854,6 @@
                         "expr": "sum by (provider) (rate(bank_request_value_total{currency=~\"$currency\", provider=~\"$provider\", outcome=\"success\"}[$__rate_interval]))",
                         "legendFormat": "{{provider}} проведено",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -903,9 +872,6 @@
                         "expr": "-(sum by (provider) (rate(bank_request_value_total{currency=~\"$currency\", provider=~\"$provider\", outcome=\"failed\"}[$__rate_interval])))",
                         "legendFormat": "{{provider}} потеря",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -1023,9 +989,6 @@
                       "spec": {
                         "expr": "sum(rate(payment_requests_total{currency=~\"$currency\"}[$__rate_interval]))",
                         "legendFormat": "запросы/сек"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -1111,9 +1074,6 @@
                         "format": "table",
                         "instant": true,
                         "legendFormat": "rps"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -1133,9 +1093,6 @@
                         "format": "table",
                         "instant": true,
                         "legendFormat": "success"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -1155,9 +1112,6 @@
                         "format": "table",
                         "instant": true,
                         "legendFormat": "p95"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "C",
@@ -1316,9 +1270,6 @@
                       "spec": {
                         "expr": "sum(rate(payment_requests_total{currency=~\"$currency\"}[$__rate_interval]))",
                         "legendFormat": "принято API"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -1335,9 +1286,6 @@
                       "spec": {
                         "expr": "sum(rate(payment_enqueued_total{currency=~\"$currency\"}[$__rate_interval]))",
                         "legendFormat": "поставлено в очередь"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -1354,9 +1302,6 @@
                       "spec": {
                         "expr": "sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"success\"}[$__rate_interval]))",
                         "legendFormat": "успешно обработано"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "C",
@@ -1373,9 +1318,6 @@
                       "spec": {
                         "expr": "sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"failed\"}[$__rate_interval]))",
                         "legendFormat": "ошибка обработки"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "D",
@@ -1493,9 +1435,6 @@
                       "spec": {
                         "expr": "sum(increase(payment_processed_total{currency=~\"$currency\", outcome=\"success\"}[$__range]))",
                         "legendFormat": "успешно"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -1512,9 +1451,6 @@
                       "spec": {
                         "expr": "sum(increase(payment_processed_total{currency=~\"$currency\", outcome=\"failed\"}[$__range]))",
                         "legendFormat": "ошибка"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -1614,9 +1550,6 @@
                       "spec": {
                         "expr": "sum by (reason) (increase(payment_failed_total{currency=~\"$currency\"}[$__range]))",
                         "legendFormat": "{{reason}}"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -1702,9 +1635,6 @@
                         "expr": "100 * sum by (currency) (rate(payment_processed_total{currency=~\"$currency\", outcome=\"failed\"}[$__range])) / clamp_min(sum by (currency) (rate(payment_processed_total{currency=~\"$currency\"}[$__range])), 0.001)",
                         "legendFormat": "{{currency}}",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -1799,9 +1729,6 @@
                       "spec": {
                         "expr": "sum(payment_queue_depth)",
                         "legendFormat": "ожидают в очереди"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -1818,9 +1745,6 @@
                       "spec": {
                         "expr": "sum(payment_active_processing)",
                         "legendFormat": "в обработке"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -1940,9 +1864,6 @@
                         "expr": "histogram_quantile(0.50, sum(rate(payment_queue_wait_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
                         "legendFormat": "ожидание p50",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -1961,9 +1882,6 @@
                         "expr": "histogram_quantile(0.95, sum(rate(payment_queue_wait_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
                         "legendFormat": "ожидание p95",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -1983,9 +1901,6 @@
                         "instant": false,
                         "legendFormat": "ожидание p99",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "C",
@@ -2105,9 +2020,6 @@
                         "expr": "histogram_quantile(0.50, sum(rate(payment_processing_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
                         "legendFormat": "обработка p50",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -2126,9 +2038,6 @@
                         "expr": "histogram_quantile(0.95, sum(rate(payment_processing_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
                         "legendFormat": "обработка p95",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -2147,9 +2056,6 @@
                         "expr": "histogram_quantile(0.99, sum(rate(payment_processing_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
                         "legendFormat": "обработка p99",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "C",
@@ -2269,9 +2175,6 @@
                         "expr": "sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"success\"}[$__range])) / sum(rate(payment_processed_total{currency=~\"$currency\"}[$__range])) * 100",
                         "legendFormat": "успешность",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -2375,9 +2278,6 @@
                         "expr": "sum(rate({__name__=~\"http_server_request_duration_seconds_count|http_server_duration_milliseconds_count\"}[$__rate_interval]))",
                         "legendFormat": "HTTP запросы",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -2396,9 +2296,6 @@
                         "expr": "sum(rate({__name__=~\"http_server_request_duration_seconds_count|http_server_duration_milliseconds_count\", http_response_status_code=~\"4..|5..\"}[$__rate_interval])) or sum(rate({__name__=~\"http_server_request_duration_seconds_count|http_server_duration_milliseconds_count\", http_status_code=~\"4..|5..\"}[$__rate_interval]))",
                         "legendFormat": "HTTP ошибки",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -2518,9 +2415,6 @@
                         "expr": "histogram_quantile(0.99, sum(rate(http_server_request_duration_seconds_bucket[$__rate_interval])) by (le))",
                         "legendFormat": "HTTP p99",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -2539,9 +2433,6 @@
                         "expr": "histogram_quantile(0.95, sum(rate(http_server_request_duration_seconds_bucket[$__rate_interval])) by (le))",
                         "legendFormat": "HTTP p95",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -2561,9 +2452,6 @@
                         "instant": false,
                         "legendFormat": "HTTP p90",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "C",
@@ -2583,9 +2471,6 @@
                         "instant": false,
                         "legendFormat": "HTTP p75",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "D",
@@ -2605,9 +2490,6 @@
                         "instant": false,
                         "legendFormat": "HTTP p50",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "E",
@@ -2726,9 +2608,6 @@
                         "expr": "sum(rate(payment_value_total{currency=~\"$currency\", outcome=\"failed\"}[$__range])) / clamp_min(sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"failed\"}[$__range])), 0.001)",
                         "legendFormat": "средний чек",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -2813,9 +2692,6 @@
                         "expr": "max_over_time(dotnet_gc_last_collection_memory_committed_size_bytes[$__rate_interval])",
                         "legendFormat": "Committed Memory Size",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "Committed Memory Size",
@@ -2834,9 +2710,6 @@
                         "expr": "max_over_time(dotnet_gc_last_collection_heap_size_bytes[$__rate_interval])",
                         "legendFormat": "Objects Size",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "Objects Size",
@@ -2857,9 +2730,6 @@
                         "instant": false,
                         "legendFormat": "Allocations Size",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "Allocations Size",
@@ -2986,9 +2856,6 @@
                         "expr": "sum by(gc_heap_generation) (max_over_time(dotnet_gc_last_collection_heap_size_bytes[$__rate_interval]))",
                         "legendFormat": "__auto",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "Heap Size",
@@ -3179,9 +3046,6 @@
                         "expr": "sum by (gc_heap_generation) (max_over_time(dotnet_gc_last_collection_heap_fragmentation_size_bytes[$__rate_interval]))",
                         "legendFormat": "__auto",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "Heap Fragmentation",
@@ -3374,9 +3238,6 @@
                         "instant": false,
                         "legendFormat": "__auto",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "gc",
@@ -3496,9 +3357,6 @@
                         "expr": "increase(dotnet_exceptions_total[$__rate_interval])",
                         "legendFormat": "Exceptions",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "Exceptions",
@@ -3612,11 +3470,10 @@
                       "group": "prometheus",
                       "version": "v0",
                       "spec": {
+                        "editorMode": "code",
                         "expr": "sum(increase(payment_value_total{currency=~\"$currency\", outcome=\"success\"}[$__range]))",
-                        "legendFormat": "успешная сумма"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
+                        "legendFormat": "успешная сумма",
+                        "range": true
                       }
                     },
                     "refId": "A",
@@ -3701,9 +3558,6 @@
                         "expr": "max_over_time(dotnet_thread_pool_thread_count_total[$__rate_interval])",
                         "legendFormat": "ThreadPool Threads",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "ThreadPool Threads",
@@ -3784,9 +3638,6 @@
                         "expr": "max_over_time(dotnet_thread_pool_queue_length_total[$__rate_interval])",
                         "legendFormat": "ThreadPool Threads Queue Length",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "ThreadPool Threads Queue Length",
@@ -3867,9 +3718,6 @@
                         "expr": "sum(rate(http_server_request_duration_seconds_bucket{http_status_code!~\"2..\"}[$__rate_interval]) or vector(0)) / sum(rate(http_server_request_duration_seconds_bucket[$__rate_interval]))",
                         "legendFormat": "All",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "All",
@@ -3888,9 +3736,6 @@
                         "expr": "sum(rate(http_server_request_duration_seconds_bucket{http_status_code=~\"4..\"}[$__rate_interval]) or vector(0)) / sum(rate(http_server_request_duration_seconds_bucket[$__rate_interval]))",
                         "legendFormat": "4XX",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "4XX",
@@ -3909,9 +3754,6 @@
                         "expr": "sum(rate(http_server_request_duration_seconds_bucket{http_status_code=~\"5..\"}[$__rate_interval]) or vector(0)) / sum(rate(http_server_request_duration_seconds_bucket[$__rate_interval]))",
                         "legendFormat": "5XX",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "5XX",
@@ -4073,9 +3915,6 @@
                       "spec": {
                         "expr": "sum(increase(payment_value_total{currency=~\"$currency\", outcome=\"failed\"}[$__range]))",
                         "legendFormat": "потенциальная потеря"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -4160,9 +3999,6 @@
                         "expr": "histogram_quantile(0.95, sum by(le) (rate(payment_processing_duration_milliseconds_bucket{currency=~\"$currency\"}[$__range])))",
                         "legendFormat": "p95",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -4246,11 +4082,10 @@
                       "group": "prometheus",
                       "version": "v0",
                       "spec": {
+                        "editorMode": "code",
                         "expr": "sum(payment_queue_depth)",
-                        "legendFormat": "очередь"
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
+                        "legendFormat": "очередь",
+                        "range": true
                       }
                     },
                     "refId": "A",
@@ -4338,9 +4173,6 @@
                         "expr": "-(sum by (currency) (rate(payment_value_total{currency=~\"$currency\", outcome=\"failed\"}[$__rate_interval])))",
                         "legendFormat": "потеря / {{currency}}",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "B",
@@ -4359,9 +4191,6 @@
                         "expr": "sum by (currency) (rate(payment_value_total{currency=~\"$currency\", outcome=\"success\"}[$__rate_interval]))",
                         "legendFormat": "проведено / {{currency}}",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -5098,9 +4927,6 @@
             "spec": {
               "query": "label_values(payment_requests_total, currency)",
               "refId": "PrometheusVariableQueryEditor-VariableQuery"
-            },
-            "labels": {
-              "grafana.app/export-label": "prometheus-1"
             }
           },
           "regex": "",
@@ -5131,17 +4957,15 @@
             "group": "prometheus",
             "version": "v0",
             "spec": {
-              "query": "label_values(bank_request_duration_ms_count, provider)",
+              "qryType": 1,
+              "query": "label_values(bank_request_duration_milliseconds_count,provider)",
               "refId": "PrometheusVariableQueryEditor-VariableQuery"
-            },
-            "labels": {
-              "grafana.app/export-label": "prometheus-1"
             }
           },
           "regex": "",
           "regexApplyTo": "value",
           "sort": "alphabeticalAsc",
-          "definition": "label_values(bank_request_duration_ms_count, provider)",
+          "definition": "label_values(bank_request_duration_milliseconds_count,provider)",
           "options": [],
           "multi": true,
           "includeAll": true,

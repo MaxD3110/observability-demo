@@ -1,20 +1,6 @@
 groups:
   - name: financial-nano-gateway
     rules:
-      # Recording rule: заранее считаем P95 latency, чтобы dashboard не повторял длинный PromQL.
-      - record: app:payment_processing:p95_ms
-        expr: histogram_quantile(0.95, sum(rate(payment_processing_duration_ms_bucket[5m])) by (le))
-
-      - alert: PaymentProcessingLatencyHigh
-        expr: app:payment_processing:p95_ms > 1000
-        for: 5m
-        labels:
-          severity: warning
-          service: financial-nano-gateway
-        annotations:
-          summary: "High payment processing latency"
-          description: "P95 payment processing latency is above 1000 ms for at least 5 minutes."
-
       - alert: MonitoringTargetDown
         expr: up == 0
         for: 2m
