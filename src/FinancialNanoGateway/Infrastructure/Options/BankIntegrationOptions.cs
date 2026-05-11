@@ -2,6 +2,8 @@
 
 public sealed class BankIntegrationOptions
 {
+    public string ProviderName { get; init; } = "MockBank";
+
     public int FailureRatePercentage { get; init; } = 10;
 
     public int MinRequestDelayMs { get; init; } = 50;

@@ -1,13 +1,10 @@
+# Grafana загружает dashboard JSON из папки dashboards, без ручной настройки через UI.
 apiVersion: 1
 
 providers:
   - name: Financial Monitoring
-    orgId: 1
     folder: Financial Nano Gateway
     type: file
-    disableDeletion: false
-    updateIntervalSeconds: 15
-    allowUiUpdates: false
+    allowUiUpdates: false # Дашборды read-only и не могут меняться в webUi графаны.
     options:
       path: /var/lib/grafana/dashboards
-      foldersFromFilesStructure: false
