@@ -74,17 +74,17 @@ public sealed class PaymentMetrics : IPaymentMetrics
             description: "Распределение сумм входящих платежей. Валюта передается label-ом.");
 
         _paymentQueueWaitDuration = meter.CreateHistogram<double>(
-            "payment_queue_wait_duration_ms",
+            "payment_queue_wait_duration",
             unit: "ms",
             description: "Сколько времени платеж провел в очереди до начала обработки.");
 
         _paymentProcessingDuration = meter.CreateHistogram<double>(
-            "payment_processing_duration_ms",
+            "payment_processing_duration",
             unit: "ms",
             description: "Полная длительность обработки платежа background worker-ом.");
 
         _bankRequestDuration = meter.CreateHistogram<double>(
-            "bank_request_duration_ms",
+            "bank_request_duration",
             unit: "ms",
             description: "Длительность вызова к банковскому провайдеру.");
 
