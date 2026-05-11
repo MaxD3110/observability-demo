@@ -10,18 +10,18 @@ namespace FinancialNanoGateway.Application;
 public sealed class PaymentProcessor : BackgroundService
 {
     private readonly IPaymentQueue _paymentQueue;
-    private readonly IBankIntegrationService _bankIntegrationService;
     private readonly IPaymentMetrics _metrics;
     private readonly ILogger<PaymentProcessor> _logger;
+    private readonly IBankIntegrationService[] _bankIntegrationServices;
 
     public PaymentProcessor(
         IPaymentQueue paymentQueue,
-        IBankIntegrationService bankIntegrationService,
+        IEnumerable<IBankIntegrationService> bankIntegrationServices,
         IPaymentMetrics metrics,
         ILogger<PaymentProcessor> logger)
     {
         _paymentQueue = paymentQueue;
-        _bankIntegrationService = bankIntegrationService;
+        _bankIntegrationServices = bankIntegrationServices.ToArray();
         _metrics = metrics;
         _logger = logger;
     }
@@ -41,7 +41,8 @@ public sealed class PaymentProcessor : BackgroundService
 
         try
         {
-            await _bankIntegrationService.ProcessPaymentAsync(payment, cancellationToken);
+            var index = Random.Shared.NextInt64(0, _bankIntegrationServices.Length - 1);
+            await _bankIntegrationServices[index].ProcessPaymentAsync(payment, cancellationToken);
 
             _metrics.PaymentProcessingCompleted(payment, stopwatch.Elapsed);
             _logger.LogInformation("Payment processed. PaymentId={PaymentId}", payment.Id);

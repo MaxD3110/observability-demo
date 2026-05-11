@@ -7,12 +7,12 @@ using Microsoft.Extensions.Options;
 
 namespace FinancialNanoGateway.Infrastructure.Services;
 
-public sealed class BankIntegrationService : IBankIntegrationService
+public sealed class BankBIntegrationService : IBankIntegrationService
 {
-    private readonly BankIntegrationOptions _options;
+    private readonly BankBIntegrationOptions _options;
     private readonly IPaymentMetrics _metrics;
 
-    public BankIntegrationService(IOptions<BankIntegrationOptions> options, IPaymentMetrics metrics)
+    public BankBIntegrationService(IOptions<BankBIntegrationOptions> options, IPaymentMetrics metrics)
     {
         _options = options.Value;
         _metrics = metrics;

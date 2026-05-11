@@ -17,9 +17,14 @@ services:
       OTEL_METRIC_EXPORT_INTERVAL: 5000
       OTEL_RESOURCE_ATTRIBUTES: deployment.environment=Development,service.namespace=financial-demo
 
-      BankIntegrationOptions__FailureRatePercentage: 10
-      BankIntegrationOptions__MinRequestDelayMs: 50
-      BankIntegrationOptions__MaxRequestDelayMs: 500
+      BankAIntegrationOptions__ProviderName: "CheetahBank"
+      BankAIntegrationOptions__FailureRatePercentage: 30
+      BankAIntegrationOptions__MinRequestDelayMs: 10
+      BankAIntegrationOptions__MaxRequestDelayMs: 500
+      BankBIntegrationOptions__ProviderName: "TortoiseBank"
+      BankBIntegrationOptions__FailureRatePercentage: 5
+      BankBIntegrationOptions__MinRequestDelayMs: 100
+      BankBIntegrationOptions__MaxRequestDelayMs: 900
     depends_on:
       - otel-collector
     healthcheck:

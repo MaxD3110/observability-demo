@@ -60,9 +60,11 @@ public static class ServiceCollectionExtensions
 
         public void AddApplicationOptions(IConfiguration configuration)
         {
-            services
-                .AddOptions<BankIntegrationOptions>()
-                .Bind(configuration.GetSection(nameof(BankIntegrationOptions)));
+            services.AddOptions<BankAIntegrationOptions>()
+                .Bind(configuration.GetSection(nameof(BankAIntegrationOptions)));
+
+            services.AddOptions<BankBIntegrationOptions>()
+                .Bind(configuration.GetSection(nameof(BankBIntegrationOptions)));
         }
     }
 }
