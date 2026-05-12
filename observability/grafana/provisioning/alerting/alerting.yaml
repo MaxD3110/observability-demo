@@ -1,0 +1,83 @@
+﻿# Grafana загружает правила алертов, без ручной настройки через UI.
+
+apiVersion: 1
+
+# 1. Контактные точки (Contact Points)
+contactPoints:
+  - orgId: 1
+    name: "Telegram Receiver"
+    receivers:
+      - uid: telegram_dev_team
+        type: telegram
+        disableResolveMessage: false # Присылать уведомление, когда всё починилось
+        settings:
+          bottoken: "8670180279:AAH6aBAma7R5tDztqoAKZoQ83IYAqjsGXCI"
+          chatid: "8378060934"
+
+# 2. Политики уведомлений (Notification Policies)
+# Это логика: какой алерт куда отправлять
+policies:
+  - orgId: 1
+    receiver: "Telegram Receiver"
+    group_by: ["alertname", "grafana_folder", "provider"]
+    group_wait: 10s      # Сколько ждать перед первой отправкой
+    group_interval: 1m   # Пауза перед отправкой новых алертов в той же группе
+    repeat_interval: 1h  # Как часто напоминать об активном алерте
+
+# 3. Группы алертов и правила (Evaluation Groups)
+groups:
+  - orgId: 1
+    name: "Окно проверки 10s"
+    folder: "Financial Nano Gateway"
+    interval: 10s
+    rules:
+      - uid: bank_failure_id
+        title: 'Высокий % ошибочных исходов по банкам {{ $labels.provider }}'
+        condition: C
+        for: 1m
+        data:
+          - refId: B
+            datasourceUid: prometheus
+            relativeTimeRange: { from: 300, to: 0 }
+            model:
+              datasource:
+                type: prometheus
+                uid: prometheus
+              editorMode: code
+              expr: 100 * sum by (provider) (rate(bank_request_value_total{outcome="failed"}[$__rate_interval])) / clamp_min(sum by (provider) (rate(bank_request_value_total[$__rate_interval])), 0.001)
+              instant: true
+              intervalMs: 10000
+              legendFormat: '{{provider}} % ошибок'
+              refId: B
+          - refId: C
+            queryType: expression
+            datasourceUid: "__expr__"
+            model:
+              conditions:
+                - evaluator:
+                    params: [10]
+                    type: gt
+                  operator:
+                    type: and
+                  query:
+                    params: [C]
+                  reducer:
+                    params: []
+                    type: last
+                  type: query
+              datasource:
+                type: "__expr__"
+                uid: "__expr__"
+              expression: B
+              intervalMs: 5000
+              refId: C
+              type: threshold
+        dashboardUid: adxhhjv
+        panelId: 43
+        noDataState: NoData
+        execErrState: Error
+        annotations:
+          __dashboardUid__: adxhhjv
+          __panelId__: "43"
+        labels:
+          severity: critical

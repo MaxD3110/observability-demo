@@ -9,12 +9,12 @@ namespace FinancialNanoGateway.Infrastructure.Services;
 
 public sealed class BankBIntegrationService : IBankIntegrationService
 {
-    private readonly BankBIntegrationOptions _options;
+    private readonly IOptionsMonitor<BankBIntegrationOptions> _options;
     private readonly IPaymentMetrics _metrics;
 
-    public BankBIntegrationService(IOptions<BankBIntegrationOptions> options, IPaymentMetrics metrics)
+    public BankBIntegrationService(IOptionsMonitor<BankBIntegrationOptions> options, IPaymentMetrics metrics)
     {
-        _options = options.Value;
+        _options = options;
         _metrics = metrics;
     }
     
@@ -25,13 +25,18 @@ public sealed class BankBIntegrationService : IBankIntegrationService
 
         try
         {
-            var latency = Random.Shared.Next(_options.MinRequestDelayMs, _options.MaxRequestDelayMs + 1);
+            var latency = Random.Shared.Next(_options.CurrentValue.MinRequestDelayMs, _options.CurrentValue.MaxRequestDelayMs + 1);
             await Task.Delay(latency, cancellationToken);
 
-            var failed = Random.Shared.NextInt64(100) < _options.FailureRatePercentage;
+            var failed = Random.Shared.NextInt64(100) < _options.CurrentValue.FailureRatePercentage;
             if (failed)
             {
-                throw new PaymentFailedException(payment.Id);
+                Action[] pitfalls =
+                [
+                    () => throw new PaymentFailedException(payment.Id)
+                ];
+
+                pitfalls[Random.Shared.Next(pitfalls.Length)]();
             }
 
             succeeded = true;
@@ -39,7 +44,7 @@ public sealed class BankBIntegrationService : IBankIntegrationService
         finally
         {
             stopwatch.Stop();
-            _metrics.BankRequestCompleted(payment, _options.ProviderName, succeeded, stopwatch.Elapsed);
+            _metrics.BankRequestCompleted(payment, _options.CurrentValue.ProviderName, succeeded, stopwatch.Elapsed);
         }
     }
 }

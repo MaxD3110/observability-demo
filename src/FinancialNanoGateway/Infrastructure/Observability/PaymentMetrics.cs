@@ -170,6 +170,7 @@ public sealed class PaymentMetrics : IPaymentMetrics
     /// <summary>
     /// Добавляем дополнительные labels для метрик, чтобы иметь возможность создать более детальный дашборд,
     /// не создавая миллион однотипных метрик под незначительно отличающийся контекст.
+    /// Пример: payments_total{currency="USD", status="success", provider="stripe"}
     /// </summary>
     /// <returns>TagList - легковесная структура, не занимающая heap</returns>
     private static TagList CreatePaymentTags(

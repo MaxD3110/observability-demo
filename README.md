@@ -13,7 +13,7 @@
 2. **Доступ к ресурсам:** 
 * Swagger (API): http://localhost:8080/swagger
 * Prometheus: http://localhost:9090
-* Grafana: http://localhost:3000 (Login: admin / Password: admin)
+* Grafana: http://localhost:3000 (Login: admin / Password: 12345)
    
 ---
 
@@ -54,7 +54,7 @@
 
 ## Алертинг
 
-Алерты сконфигурированы как Infrastructure as Code. Grafana автоматически подхватывает правила из папки ./provisioning/alerting. Реализован тестовый алерт на глубину очереди. Получателя алерта необходимо будет настроить вручную, в UI Grafana.
+Алерты сконфигурированы как Infrastructure as Code. Grafana автоматически подхватывает правила из папки ./provisioning/alerting. Реализован тестовый алерт на % ошибочных исходов по банкам.
 
 ---
 

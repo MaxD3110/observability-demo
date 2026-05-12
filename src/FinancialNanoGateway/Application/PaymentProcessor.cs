@@ -47,9 +47,9 @@ public sealed class PaymentProcessor : BackgroundService
             _metrics.PaymentProcessingCompleted(payment, stopwatch.Elapsed);
             _logger.LogInformation("Payment processed. PaymentId={PaymentId}", payment.Id);
         }
-        catch (PaymentFailedException exception)
+        catch (Exception exception)
         {
-            _metrics.PaymentProcessingFailed(payment, "bank_declined", stopwatch.Elapsed);
+            _metrics.PaymentProcessingFailed(payment, exception.GetType().Name, stopwatch.Elapsed);
             _logger.LogWarning(exception, "Payment failed. PaymentId={PaymentId}", payment.Id);
         }
         finally
