@@ -3,8 +3,8 @@
   "kind": "Dashboard",
   "metadata": {
     "name": "adxhhjv",
-    "generation": 3,
-    "creationTimestamp": "2026-05-12T17:13:43Z",
+    "generation": 2,
+    "creationTimestamp": "2026-05-13T14:21:27Z",
     "labels": {},
     "annotations": {}
   },
@@ -555,7 +555,7 @@
                 "minVizHeight": 16,
                 "minVizWidth": 8,
                 "namePlacement": "auto",
-                "orientation": "horizontal",
+                "orientation": "vertical",
                 "reduceOptions": {
                   "calcs": [
                     "lastNotNull"
@@ -563,7 +563,7 @@
                   "fields": "",
                   "values": false
                 },
-                "showUnfilled": true,
+                "showUnfilled": false,
                 "sizing": "auto",
                 "valueMode": "color"
               },
@@ -581,12 +581,12 @@
                         "color": "red"
                       },
                       {
-                        "value": 90,
+                        "value": 70,
                         "color": "orange"
                       },
                       {
-                        "value": 98,
-                        "color": "green"
+                        "value": 90,
+                        "color": "blue"
                       }
                     ]
                   },
@@ -640,14 +640,14 @@
             "version": "13.0.1",
             "spec": {
               "options": {
-                "displayMode": "gradient",
+                "displayMode": "lcd",
                 "legend": {
                   "calcs": [],
                   "displayMode": "list",
                   "placement": "bottom",
                   "showLegend": false
                 },
-                "maxVizHeight": 300,
+                "maxVizHeight": 150,
                 "minVizHeight": 16,
                 "minVizWidth": 8,
                 "namePlacement": "auto",
@@ -659,34 +659,37 @@
                   "fields": "",
                   "values": false
                 },
-                "showUnfilled": true,
-                "sizing": "auto",
+                "showUnfilled": false,
+                "sizing": "manual",
                 "valueMode": "color"
               },
               "fieldConfig": {
                 "defaults": {
                   "unit": "ms",
                   "decimals": 0,
+                  "min": 400,
+                  "max": 1000,
                   "thresholds": {
                     "mode": "absolute",
                     "steps": [
                       {
                         "value": 0,
-                        "color": "green"
+                        "color": "blue"
                       },
                       {
-                        "value": 350,
+                        "value": 600,
                         "color": "orange"
                       },
                       {
-                        "value": 700,
+                        "value": 900,
                         "color": "red"
                       }
                     ]
                   },
                   "color": {
                     "mode": "thresholds"
-                  }
+                  },
+                  "fieldMinMax": false
                 },
                 "overrides": []
               }
@@ -825,7 +828,68 @@
                     }
                   }
                 },
-                "overrides": []
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CheetahBank p50"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "orange",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CheetahBank p95"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "semi-dark-orange",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "TortoiseBank p50"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "blue",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "TortoiseBank p95"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "semi-dark-blue",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
             }
           }
@@ -962,7 +1026,68 @@
                     }
                   }
                 },
-                "overrides": []
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CheetahBank проведено"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "super-light-orange",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "TortoiseBank проведено"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "super-light-blue",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "CheetahBank потеря"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "dark-orange",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "TortoiseBank потеря"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "dark-blue",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
             }
           }
@@ -1041,7 +1166,7 @@
                   },
                   "color": {
                     "mode": "fixed",
-                    "fixedColor": "blue"
+                    "fixedColor": "green"
                   }
                 },
                 "overrides": []
@@ -1161,10 +1286,13 @@
                     "cellOptions": {
                       "type": "auto"
                     },
+                    "filterable": true,
                     "footer": {
-                      "reducers": []
+                      "reducers": [
+                        "mean"
+                      ]
                     },
-                    "inspect": false
+                    "inspect": true
                   }
                 },
                 "overrides": [
@@ -1240,6 +1368,42 @@
                       {
                         "id": "custom.hideFrom.viz",
                         "value": true
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "Банк"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 138
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "RPS"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 102
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "% успешных запросов"
+                    },
+                    "properties": [
+                      {
+                        "id": "custom.width",
+                        "value": 236
                       }
                     ]
                   }
@@ -1382,7 +1546,7 @@
                     "barAlignment": 0,
                     "barWidthFactor": 0.6,
                     "drawStyle": "line",
-                    "fillOpacity": 16,
+                    "fillOpacity": 0,
                     "gradientMode": "none",
                     "hideFrom": {
                       "legend": false,
@@ -1408,7 +1572,38 @@
                     }
                   }
                 },
-                "overrides": []
+                "overrides": [
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "ошибка обработки"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "light-red",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  },
+                  {
+                    "matcher": {
+                      "id": "byName",
+                      "options": "успешно обработано"
+                    },
+                    "properties": [
+                      {
+                        "id": "color",
+                        "value": {
+                          "fixedColor": "light-green",
+                          "mode": "fixed"
+                        }
+                      }
+                    ]
+                  }
+                ]
               }
             }
           }
@@ -1567,14 +1762,14 @@
             "version": "13.0.1",
             "spec": {
               "options": {
-                "displayLabels": [
-                  "name",
-                  "percent"
-                ],
+                "displayLabels": [],
                 "legend": {
                   "displayMode": "list",
                   "placement": "bottom",
-                  "showLegend": true
+                  "showLegend": true,
+                  "values": [
+                    "percent"
+                  ]
                 },
                 "pieType": "donut",
                 "reduceOptions": {
@@ -1584,7 +1779,7 @@
                   "fields": "",
                   "values": false
                 },
-                "sort": "desc",
+                "sort": "none",
                 "tooltip": {
                   "hideZeros": false,
                   "mode": "single",
@@ -1798,7 +1993,7 @@
                     ]
                   },
                   "color": {
-                    "mode": "continuous-cividis"
+                    "mode": "continuous-BlPu"
                   },
                   "custom": {
                     "axisBorderShow": false,
@@ -1954,7 +2149,7 @@
                     ]
                   },
                   "color": {
-                    "mode": "palette-classic"
+                    "mode": "continuous-BlPu"
                   },
                   "custom": {
                     "axisBorderShow": false,
@@ -2109,7 +2304,7 @@
                     ]
                   },
                   "color": {
-                    "mode": "palette-classic"
+                    "mode": "continuous-BlPu"
                   },
                   "custom": {
                     "axisBorderShow": false,
@@ -2192,7 +2387,7 @@
             "version": "13.0.1",
             "spec": {
               "options": {
-                "barShape": "flat",
+                "barShape": "rounded",
                 "barWidthFactor": 0.5,
                 "colorMode": "background",
                 "effects": {
@@ -2200,12 +2395,12 @@
                   "centerGlow": false,
                   "gradient": true
                 },
-                "endpointMarker": "point",
+                "endpointMarker": "none",
                 "graphMode": "none",
                 "justifyMode": "center",
                 "minVizHeight": 75,
                 "minVizWidth": 75,
-                "orientation": "auto",
+                "orientation": "horizontal",
                 "reduceOptions": {
                   "calcs": [
                     "lastNotNull"
@@ -2217,7 +2412,7 @@
                 "segmentSpacing": 0.3,
                 "shape": "gauge",
                 "showThresholdLabels": false,
-                "showThresholdMarkers": true,
+                "showThresholdMarkers": false,
                 "sizing": "auto",
                 "sparkline": true,
                 "textMode": "auto"
@@ -2236,11 +2431,11 @@
                         "color": "red"
                       },
                       {
-                        "value": 80,
+                        "value": 70,
                         "color": "orange"
                       },
                       {
-                        "value": 95,
+                        "value": 90,
                         "color": "green"
                       }
                     ]
@@ -4038,9 +4233,6 @@
                         "instant": false,
                         "legendFormat": "__auto",
                         "range": true
-                      },
-                      "labels": {
-                        "grafana.app/export-label": "prometheus-1"
                       }
                     },
                     "refId": "A",
@@ -4069,7 +4261,7 @@
                     "percent"
                   ]
                 },
-                "pieType": "pie",
+                "pieType": "donut",
                 "reduceOptions": {
                   "calcs": [
                     "lastNotNull"
@@ -4553,7 +4745,7 @@
                         "height": 4,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-2"
+                          "name": "panel-3"
                         }
                       }
                     },
@@ -4566,7 +4758,7 @@
                         "height": 4,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-3"
+                          "name": "panel-2"
                         }
                       }
                     },
@@ -4746,20 +4938,7 @@
                       "spec": {
                         "x": 5,
                         "y": 0,
-                        "width": 5,
-                        "height": 8,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-16"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 10,
-                        "y": 0,
-                        "width": 5,
+                        "width": 7,
                         "height": 8,
                         "element": {
                           "kind": "ElementReference",
@@ -4770,13 +4949,13 @@
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 15,
+                        "x": 12,
                         "y": 0,
-                        "width": 9,
+                        "width": 12,
                         "height": 8,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-20"
+                          "name": "panel-18"
                         }
                       }
                     },
@@ -4798,37 +4977,24 @@
                       "spec": {
                         "x": 12,
                         "y": 8,
-                        "width": 12,
+                        "width": 3,
                         "height": 9,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-18"
+                          "name": "panel-16"
                         }
                       }
                     },
                     {
                       "kind": "GridLayoutItem",
                       "spec": {
-                        "x": 0,
-                        "y": 17,
-                        "width": 5,
-                        "height": 8,
+                        "x": 15,
+                        "y": 8,
+                        "width": 9,
+                        "height": 9,
                         "element": {
                           "kind": "ElementReference",
-                          "name": "panel-44"
-                        }
-                      }
-                    },
-                    {
-                      "kind": "GridLayoutItem",
-                      "spec": {
-                        "x": 5,
-                        "y": 17,
-                        "width": 19,
-                        "height": 8,
-                        "element": {
-                          "kind": "ElementReference",
-                          "name": "panel-43"
+                          "name": "panel-20"
                         }
                       }
                     }
@@ -4851,6 +5017,32 @@
                       "spec": {
                         "x": 0,
                         "y": 0,
+                        "width": 5,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-44"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 5,
+                        "y": 0,
+                        "width": 19,
+                        "height": 8,
+                        "element": {
+                          "kind": "ElementReference",
+                          "name": "panel-43"
+                        }
+                      }
+                    },
+                    {
+                      "kind": "GridLayoutItem",
+                      "spec": {
+                        "x": 0,
+                        "y": 8,
                         "width": 12,
                         "height": 8,
                         "element": {
@@ -4863,7 +5055,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 12,
-                        "y": 0,
+                        "y": 8,
                         "width": 4,
                         "height": 8,
                         "element": {
@@ -4876,7 +5068,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 16,
-                        "y": 0,
+                        "y": 8,
                         "width": 4,
                         "height": 8,
                         "element": {
@@ -4889,7 +5081,7 @@
                       "kind": "GridLayoutItem",
                       "spec": {
                         "x": 20,
-                        "y": 0,
+                        "y": 8,
                         "width": 4,
                         "height": 8,
                         "element": {
@@ -5063,7 +5255,7 @@
                         "x": 0,
                         "y": 9,
                         "width": 8,
-                        "height": 9,
+                        "height": 6,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-38"
@@ -5076,7 +5268,7 @@
                         "x": 8,
                         "y": 9,
                         "width": 8,
-                        "height": 9,
+                        "height": 6,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-39"
@@ -5089,7 +5281,7 @@
                         "x": 16,
                         "y": 9,
                         "width": 4,
-                        "height": 9,
+                        "height": 6,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-40"
@@ -5102,7 +5294,7 @@
                         "x": 20,
                         "y": 9,
                         "width": 4,
-                        "height": 9,
+                        "height": 6,
                         "element": {
                           "kind": "ElementReference",
                           "name": "panel-41"
@@ -5129,8 +5321,8 @@
     ],
     "timeSettings": {
       "timezone": "browser",
-      "from": "2026-05-11T12:26:02.870Z",
-      "to": "2026-05-11T13:26:02.870Z",
+      "from": "now-15m",
+      "to": "now",
       "autoRefresh": "5s",
       "autoRefreshIntervals": [
         "5s",
