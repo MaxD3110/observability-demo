@@ -12,11 +12,11 @@ public sealed class PaymentTracing : IPaymentTracing
 
     private static readonly ActivitySource Source = new(ActivitySourceName);
 
-    // Propagator сериализует/десериализует trace-контекст в текстовые заголовки
+    // The propagator serializes/deserializes the trace context to/from text headers.
     private static readonly TextMapPropagator Propagator = Propagators.DefaultTextMapPropagator;
 
-    // Геттер/сеттер описывают, КАК класть и читать заголовки в нашем "брокере" (Dictionary).
-    // С реальным брокером тут была бы запись/чтение message headers Kafka или properties RabbitMQ.
+    // The getter/setter describe HOW to put and read headers in our "broker" (Dictionary).
+    // With a real broker this would write/read Kafka message headers or RabbitMQ properties.
     private static readonly Action<IDictionary<string, string>, string, string> InjectHeader =
         (headers, key, value) => headers[key] = value;
 
@@ -28,14 +28,14 @@ public sealed class PaymentTracing : IPaymentTracing
 
     public Activity? StartPublish(Payment payment, IDictionary<string, string> headers)
     {
-        // PRODUCER-span создается ВНУТРИ серверного span-а запроса (Activity.Current), поэтому
-        // становится его child-ом и попадает в тот же trace, что и HTTP POST.
+        // The PRODUCER span is created INSIDE the request's server span (Activity.Current), so it
+        // becomes its child and lands in the same trace as the HTTP POST.
         var activity = Source.StartActivity("payments publish", ActivityKind.Producer);
 
         SetMessagingTags(activity, operation: "publish");
         SetPaymentTags(activity, payment);
 
-        // Ключевой момент: кладем контекст ТЕКУЩЕГО span-а в заголовки сообщения.
+        // The key moment: we put the CURRENT span's context into the message headers.
         var contextToInject = activity?.Context ?? Activity.Current?.Context ?? default;
         Propagator.Inject(new PropagationContext(contextToInject, Baggage.Current), headers, InjectHeader);
 
@@ -44,13 +44,13 @@ public sealed class PaymentTracing : IPaymentTracing
 
     public Activity? StartProcess(Payment payment, IReadOnlyDictionary<string, string> headers)
     {
-        // Достаем контекст producer-а из заголовков сообщения (другой поток, контекст уже не в ambient).
+        // Extract the producer context from the message headers (different thread, context no longer ambient).
         var parentContext = Propagator.Extract(default, headers, ExtractHeader);
         Baggage.Current = parentContext.Baggage;
 
-        // Best practice для очередей: consumer начинает НОВЫЙ trace и СВЯЗЫВАЕТ его link-ом с producer-ом,
-        // а не делает parent-child. Причина: consumer может разгребать очередь пачкой/с задержкой, и его
-        // жизненный цикл не вложен в запрос. parentContext: default => новый trace; links => связь с publish.
+        // Best practice for queues: the consumer starts a NEW trace and LINKS it to the producer,
+        // instead of making it parent-child. Reason: a consumer may drain the queue in batches / with delay,
+        // and its lifecycle is not nested in the request. parentContext: default => new trace; links => link to publish.
         var links = new[] { new ActivityLink(parentContext.ActivityContext) };
         var activity = Source.StartActivity(
             "payments process",
@@ -95,10 +95,10 @@ public sealed class PaymentTracing : IPaymentTracing
             return;
         }
 
-        // ВАЖНО (и противоположно метрикам!): в трейсах высокая кардинальность.
-        // В PaymentMetrics мы НЕ добавляли payment.Id/amount, чтобы не взорвать кол-во time-series в Prometheus.
-        // Здесь же span - это один конкретный запрос, а не агрегат. Чем больше контекста на запрос,
-        // тем быстрее дебаг. Поэтому кладем именно уникальные поля: id, точную сумму.
+        // IMPORTANT (and the opposite of metrics!): in traces, high cardinality is good.
+        // In PaymentMetrics we did NOT add payment.Id/amount, to avoid exploding the number of time series in Prometheus.
+        // Here a span is one specific request, not an aggregate. The more context per request,
+        // the faster the debugging. So we deliberately add the unique fields: id, exact amount.
         activity.SetTag("messaging.message.id", payment.Id);
         activity.SetTag("payment.id", payment.Id);
         activity.SetTag("payment.currency", payment.Currency);

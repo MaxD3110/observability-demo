@@ -1,20 +1,20 @@
 namespace FinancialNanoGateway.Application.Logging;
 
 /// <summary>
-/// Высокопроизводительное логирование через source generator <c>[LoggerMessage]</c>.
+/// High-performance logging via the <c>[LoggerMessage]</c> source generator.
 /// </summary>
 /// <remarks>
-/// Генератор разворачивает каждый partial-метод в готовый код на этапе компиляции:
-/// нет боксинга аргументов, нет <c>params object[]</c>, нет парсинга шаблона в рантайме,
-/// а если уровень выключен - метод выходит ДО вычисления аргументов. Это logging-аналог
-/// истории про zero-allocation у метрик (TagList).
+/// The generator expands each partial method into ready-made code at compile time:
+/// no argument boxing, no <c>params object[]</c>, no message-template parsing at runtime,
+/// and if the level is disabled the method returns BEFORE evaluating its arguments. This is the
+/// logging counterpart of the zero-allocation story from the metrics (TagList).
 /// <para>
-/// Именованные плейсхолдеры (<c>{PaymentId}</c>) сохраняют поля структурированными: в Loki
-/// они станут отдельными атрибутами, по которым можно фильтровать, а не куском текста.
+/// Named placeholders (<c>{PaymentId}</c>) keep fields structured: in Loki they become
+/// separate attributes you can filter on, instead of an opaque chunk of text.
 /// </para>
 /// <para>
-/// PII: логируем только безопасный контекст (Id платежа, валюту). Никаких номеров карт,
-/// ФИО и прочих чувствительных данных - логи уходят в общее хранилище.
+/// PII: we log only safe context (payment id, currency). No card numbers, names, or other
+/// sensitive data - logs go to shared storage.
 /// </para>
 /// </remarks>
 internal static partial class PaymentLog
@@ -37,7 +37,7 @@ internal static partial class PaymentLog
         Message = "Payment failed. PaymentId={PaymentId}, Reason={Reason}")]
     public static partial void PaymentProcessingFailed(ILogger logger, Exception exception, Guid paymentId, string reason);
 
-    // Debug: при дефолтном уровне Information эта строка НЕ пишется
+    // Debug: at the default Information level this line is NOT written.
     [LoggerMessage(
         EventId = 1003,
         Level = LogLevel.Debug,

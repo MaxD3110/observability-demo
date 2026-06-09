@@ -1,4 +1,4 @@
-# Grafana автоматически создает datasource при старте.
+# Grafana creates the datasource automatically on startup.
 apiVersion: 1
 
 datasources:

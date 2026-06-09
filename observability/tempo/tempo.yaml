@@ -1,4 +1,4 @@
-# Grafana Tempo - хранилище трейсов. Принимает OTLP от Collector и отдает их в Grafana.
+# Grafana Tempo - trace storage. Receives OTLP from the Collector and serves traces to Grafana.
 
 server:
   http_listen_port: 3200
@@ -23,4 +23,4 @@ storage:
 
 compactor:
   compaction:
-    block_retention: 24h # Сколько храним трейсы. Трейсы тяжелые - держат недолго в отличие от метрик.
+    block_retention: 24h # How long traces are kept. Traces are heavy, so unlike metrics they are kept briefly.

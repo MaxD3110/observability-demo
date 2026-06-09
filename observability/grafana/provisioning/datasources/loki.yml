@@ -8,7 +8,7 @@ datasources:
     url: http://loki:3100
     editable: false
     jsonData:
-      # Pivot лог -> trace: поле trace_id становится кликабельной ссылкой в Tempo.
+      # Log -> trace pivot: the trace_id field becomes a clickable link into Tempo.
       derivedFields:
         - name: TraceID
           datasourceUid: tempo

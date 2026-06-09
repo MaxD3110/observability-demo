@@ -29,10 +29,10 @@ public sealed class PaymentsController : ControllerBase
     }
 
     /// <summary>
-    /// Создает запрос на оплату и передает в обработку.
+    /// Creates a payment request and hands it off for processing.
     /// </summary>
-    /// <returns>Id запроса и номер в очереди</returns>
-    /// <response code="202">Запрос на оплату добавлен в очередь</response>
+    /// <returns>The request id and its position in the queue.</returns>
+    /// <response code="202">The payment request was added to the queue.</response>
     [HttpPost]
     [ProducesResponseType(StatusCodes.Status202Accepted)]
     [ProducesResponseType(StatusCodes.Status400BadRequest)]
@@ -54,7 +54,7 @@ public sealed class PaymentsController : ControllerBase
 
         _metrics.PaymentRequested(payment);
 
-        // Заголовки сообщения - наш carrier для trace-контекста. StartPublish положит сюда traceparent.
+        // The message headers are our carrier for the trace context. StartPublish puts the traceparent here.
         var headers = new Dictionary<string, string>();
         using (_tracing.StartPublish(payment, headers))
         {

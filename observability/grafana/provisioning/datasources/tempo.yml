@@ -1,4 +1,4 @@
-# Grafana автоматически создает datasource Tempo при старте.
+# Grafana creates the Tempo datasource automatically on startup.
 apiVersion: 1
 
 datasources:
@@ -13,7 +13,7 @@ datasources:
         datasourceUid: loki
         filterByTraceID: true
         filterBySpanID: false
-        spanStartTimeShift: '-5m' # запас по времени, т.к. лог и span пишутся не идеально синхронно
+        spanStartTimeShift: '-5m' # time slack, since a log and its span are not written perfectly in sync
         spanEndTimeShift: '5m'
         tags:
           - key: 'service.name'

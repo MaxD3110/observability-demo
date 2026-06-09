@@ -3,6 +3,6 @@ using FinancialNanoGateway.Domain.Models;
 namespace FinancialNanoGateway.Application.Dtos;
 
 /// <summary>
-/// Конверт (envelope) сообщения в очереди: полезная нагрузка + заголовки.
+/// Message envelope on the queue: payload + headers.
 /// </summary>
 public sealed record PaymentMessageEnvelopeDto(Payment Payment, Dictionary<string, string> Headers);

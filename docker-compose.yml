@@ -8,7 +8,7 @@ services:
     ports:
       - "8080:8080"
     volumes:
-      # Инлайн правки в appsettings.json
+      # Inline edits to appsettings.json
       - ./src/FinancialNanoGateway/appsettings.json:/app/appsettings.json
     environment:
       ASPNETCORE_ENVIRONMENT: Development
@@ -43,10 +43,10 @@ services:
     image: otel/opentelemetry-collector-contrib:0.151.0
     command: ["--config=/etc/otelcol/config.yaml"]
     expose:
-      - "4317" # OTLP/gRPC от приложения
-      - "4318" # OTLP/HTTP для совместимости
-      - "8888" # внутренние метрики Collector
-      - "8889" # метрики приложения для Prometheus
+      - "4317" # OTLP/gRPC from the app
+      - "4318" # OTLP/HTTP for compatibility
+      - "8888" # Collector's internal metrics
+      - "8889" # app metrics for Prometheus
     volumes:
       - ./observability/otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
     depends_on:
@@ -58,8 +58,8 @@ services:
     image: grafana/tempo:2.7.1
     command: ["-config.file=/etc/tempo/tempo.yaml"]
     expose:
-      - "3200" # API запросов от Grafana
-      - "4317" # OTLP/gRPC от Collector
+      - "3200" # query API from Grafana
+      - "4317" # OTLP/gRPC from the Collector
     volumes:
       - ./observability/tempo/tempo.yaml:/etc/tempo/tempo.yaml:ro
       - tempo-data:/var/tempo
@@ -82,7 +82,7 @@ services:
       - "--storage.tsdb.path=/prometheus"
       - "--storage.tsdb.retention.time=15d"
       - "--storage.tsdb.retention.size=2GB"
-      # Включает хранение exemplars (привязка точек гистограмм к TraceId). Без флага Prometheus их отбрасывает.
+      # Enables exemplar storage (linking histogram data points to TraceId). Without the flag Prometheus drops them.
       - "--enable-feature=exemplar-storage"
     ports:
       - "9090:9090"
@@ -101,9 +101,9 @@ services:
     environment:
       GF_SECURITY_ADMIN_USER: admin
       GF_SECURITY_ADMIN_PASSWORD: 12345
-      GF_AUTH_ANONYMOUS_ENABLED: "true" # Гостевой режим, не требует логиниться в UI
-      GF_USERS_ALLOW_SIGN_UP: "false" # Запрещает регистрацию новых юзеров из UI
-      # Секрет алертинга (bot token) прокидывается из .env (в .gitignore), нигде не хранится
+      GF_AUTH_ANONYMOUS_ENABLED: "true" # Guest mode, no login required in the UI
+      GF_USERS_ALLOW_SIGN_UP: "false" # Disallows new user sign-up from the UI
+      # The alerting secret (bot token) is passed in from .env (git-ignored) and stored nowhere in the repo
       TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     volumes:
       - grafana-data:/var/lib/grafana
@@ -115,7 +115,7 @@ services:
       - loki
     restart: unless-stopped
 
-# Генератор фейковой нагрузки, никакой другой роли не играет
+# Fake load generator, serves no other purpose
   payment-load-generator:
     image: curlimages/curl:8.10.1
     depends_on:

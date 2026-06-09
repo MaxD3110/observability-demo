@@ -1,112 +1,116 @@
-﻿# Financial Nano-Gateway: Observability Demo
+# Financial Nano-Gateway: Observability Demo
 
 ---
 
-## Быстрый старт
+## Quick start
 
-Проект полностью готов к работе из коробки. Инфраструктура (Prometheus + Tempo + Loki + Grafana) настроена через **Provisioning**.
+The project works out of the box. The infrastructure (Prometheus + Tempo + Loki + Grafana) is wired up via **provisioning**.
 
-1. **Запуск:**
+1. **Run:**
    ```bash
    docker-compose up -d
 
-2. **Доступ к ресурсам:** 
+2. **Access the resources:**
 * Swagger (API): http://localhost:8080/swagger
 * Prometheus: http://localhost:9090
 * Grafana: http://localhost:3000 (Login: admin / Password: 12345)
-   
+
 ---
 
-## Технологический стек
+## Tech stack
 
 *   **Runtime:** .NET 10 (ASP.NET Core)
 *   **Observability:** OpenTelemetry (OTEL) SDK
-*   **Storage:** Prometheus (метрики), Tempo (трейсы), Loki (логи)
+*   **Storage:** Prometheus (metrics), Tempo (traces), Loki (logs)
 *   **Visualization:** Grafana (Dashboards & Alerting)
 *   **Infrastructure:** Docker Compose
 
 ---
 
-## Архитектурные особенности
+## Architecture highlights
 
-В проекте реализован принцип **Explicit Metrics** - метрики являются частью контракта приложения, но их реализация скрыта за абстракциями.
+The project follows the **Explicit Metrics** principle - metrics are part of the application's contract, but their implementation is hidden behind abstractions.
 
-*   **Clean Metrics:** Интерфейсы метрик (`IPaymentMetrics`) находятся в слое `Application`, а реализация на базе `System.Diagnostics.Metrics` - в `Infrastructure.Observability`.
-*   **High Performance:** Использование структуры `TagList` для записи тегов. Это гарантирует **Zero Allocation** в горячих путях (теги хранятся на стеке), что критично для финтех-систем.
-*   **Modern DI:** Использование `IMeterFactory` для корректного управления жизненным циклом метров и упрощения тестирования.
+*   **Clean Metrics:** The metric interfaces (`IPaymentMetrics`) live in the `Application` layer, while the `System.Diagnostics.Metrics`-based implementation lives in `Infrastructure.Observability`.
+*   **High Performance:** The `TagList` struct is used to record tags. This guarantees **Zero Allocation** on hot paths (tags are kept on the stack), which is critical for fintech systems.
+*   **Modern DI:** `IMeterFactory` is used to manage the lifecycle of meters correctly and to simplify testing.
 
 ---
 
-## Модель данных мониторинга
+## Monitoring data model
 
-Проект демонстрирует три фундаментальных типа метрик:
+The project demonstrates the three fundamental metric types:
 
-| Метрика | Тип | Что измеряет |
+| Metric | Type | What it measures |
 | :--- | :--- | :--- |
-| `payment_processed_total` | **Counter** | Общее кол-во и объем транзакций (фильтры по `currency`, `provider`, `status`). |
-| `payment_processing_duration_ms` | **Histogram** | Перцентили (p95, p99) времени обработки. Поиск «выбросов» и лагов. |
-| `payment_queue_depth` | **UpDownCounter** | Текущее кол-во платежей в очереди. Индикатор перегрузки (Backpressure). |
+| `payment_processed_total` | **Counter** | Total count and volume of transactions (filterable by `currency`, `provider`, `status`). |
+| `payment_processing_duration_ms` | **Histogram** | Percentiles (p95, p99) of processing time. Hunting for outliers and lags. |
+| `payment_queue_depth` | **UpDownCounter** | Current number of payments in the queue. A backpressure / overload indicator. |
 
 
-Я постарался отразить как можно больше типов и сценариев применения метрик. Описал комментариями в коде важные моменты - на что стоит обратить внимание.
-
----
-
-## Трейсинг (Distributed Tracing)
-
-Сквозная трассировка через **OpenTelemetry -> Tempo**. Демонстрируется главное - связывание запроса через асинхронную границу: HTTP только кладёт платёж в очередь (`Channel`) и сразу отдаёт `202`, а реальная обработка идёт уже на другом потоке.
-
-Очередь рассматривается как брокер сообщений: trace-контекст (W3C `traceparent`) переносится в заголовках конверта, как это было бы с Kafka/RabbitMQ. По messaging-конвенции producer и consumer - это отдельные trace-ы, связанные через **span link** (PRODUCER -> CONSUMER -> CLIENT). В span-ы, в отличие от метрик, осознанно кладём высококардинальные поля (`payment.id`, точную сумму) - span это один запрос, а не агрегат, и чем больше контекста, тем быстрее дебаг. Ошибки фиксируются прямо на span-е - в Tempo это красный span со стектрейсом.
-
-![Tracing Demo](./assets/4.png)
+I tried to cover as many metric types and usage scenarios as possible. The important points are explained in code comments - what's worth paying attention to.
 
 ---
 
-## Логи (Structured Logging)
+## Tracing (Distributed Tracing)
 
-Структурированные логи `ILogger` -> **OpenTelemetry -> Loki**. Пишутся через source-generated методы `[LoggerMessage]` - это аналог истории про **Zero Allocation** из метрик. `BeginScope` подмешивает контекст (`PaymentId`) во все вложенные логи, не таская его руками.
+End-to-end tracing via **OpenTelemetry -> Tempo**. The key thing being demonstrated is stitching the two halves of a request across the async boundary: the HTTP request only puts the payment on a queue (`Channel`) and immediately returns `202`, while the actual processing happens later on a different thread.
 
-Дисциплина кардинальности соблюдается и здесь: в **labels** Loki попадает только низкокардинальное (`service_name`), а `trace_id` и `payment.id` уходят в **structured metadata**.
+The queue is treated as a message broker: the trace context (W3C `traceparent`) travels in the envelope headers, exactly as it would with Kafka/RabbitMQ. Following the messaging convention, the producer and consumer are separate traces joined by a **span link** (PRODUCER -> CONSUMER -> CLIENT). Unlike metrics, spans deliberately carry high-cardinality fields (`payment.id`, the exact amount) - a span is a single request, not an aggregate, and the more context per request, the faster the debugging. Errors are recorded right on the span - in Tempo that's a red span with a stack trace.
 
-![Logs Demo](./assets/5.png)
-
----
-
-## Корреляция трёх пилларов
-
-Ключевая фишка демо - переход метрика -> трейс -> лог в пару кликов:
-
-*   **Метрика -> трейс:** на гистограммах включены **exemplars** (точки с `trace_id`) - клик ведёт прямо в Tempo.
-*   **Трейс -> логи:** из span-а кнопка "Logs for this span" открывает Loki, отфильтрованный по `trace_id`.
-*   **Лог -> трейс:** поле `trace_id` в логе - кликабельная ссылка обратно в Tempo.
-
-Так «всплеск на графике задержки» за пару кликов разворачивается в конкретный упавший платёж и его лог со стектрейсом.
-
-![Correlation Demo](./assets/6.png)
+![Tracing Demo](./assets/5.png)
 
 ---
 
-## Алертинг
+## Logs (Structured Logging)
 
-Алерты сконфигурированы как Infrastructure as Code. Grafana автоматически подхватывает правила из папки ./provisioning/alerting. Реализован тестовый алерт на % ошибочных исходов по банкам.
+Structured logs via `ILogger` -> **OpenTelemetry -> Loki**. They are written through source-generated `[LoggerMessage]` methods - the logging counterpart of the **Zero Allocation** story from the metrics. `BeginScope` mixes context (`PaymentId`) into all nested logs without passing it by hand.
+
+The same cardinality discipline applies here: only low-cardinality fields (`service_name`) become Loki **labels**, while `trace_id` and `payment.id` go to **structured metadata**.
+
+![Logs Demo](./assets/7.png)
 
 ---
 
-## Визуализация (Grafana Dashboards)
+## Correlating the three pillars
 
-Мониторинг в проекте разделен на три логических уровня, что позволяет эффективно использовать данные как бизнесу, так и инженерам:
+The headline feature of the demo is jumping metric -> trace -> log in a couple of clicks:
 
-### 1. Финансовые метрики
-Фокусируются на денежных потоках и успешности бизнес-процессов. Позволяют мгновенно оценить "здоровье" продукта с точки зрения прибыли.
+*   **Metric -> trace:** histograms have **exemplars** enabled (points carrying a `trace_id`) - clicking one jumps straight into Tempo.
+*   **Trace -> logs:** from a span, the "Logs for this span" button opens Loki filtered by `trace_id`.
+*   **Log -> trace:** the `trace_id` field in a log is a clickable link back into Tempo.
+
+So a "spike on the latency graph" unfolds in a couple of clicks into the specific failed payment and its log with the stack trace.
+
+![Correlation Demo1](./assets/8.png)
+![Correlation Demo2](./assets/6.png)
+
+---
+
+## Alerting
+
+Alerts are configured as Infrastructure as Code. Grafana automatically picks up the rules from ./provisioning/alerting. There is an alert on the % of failed bank outcomes, delivered to Telegram through a custom, readable notification template (instead of the default field dump). The bot token is supplied via an environment variable (`.env`, git-ignored), not stored in the repo.
+
+![Alerting Demo](./assets/4.png)
+
+---
+
+## Visualization (Grafana Dashboards)
+
+Monitoring in the project is split into three logical levels, so the data is useful both to the business and to engineers:
+
+### 1. Financial metrics
+Focus on money flows and the success of business processes. They let you instantly gauge the product's "health" from a revenue perspective.
 
 ![Financial Dashboard](./assets/1.png)
 
-### 2. Операционные метрики
-Предназначены для контроля внешних интеграций и качества работы провайдеров.
+### 2. Operational metrics
+Intended for monitoring external integrations and the quality of provider performance.
 
 ![Operational Dashboard](./assets/2.png)
+![Operational Dashboard](./assets/9.png)
 
-### 3. Технические метрики
-Подкапотные метрики самого приложения, необходимые для глубокого анализа производительности и отладки.
+### 3. Technical metrics
+Under-the-hood metrics of the application itself, needed for deep performance analysis and debugging.
 
 ![Technical Dashboard](./assets/3.png)

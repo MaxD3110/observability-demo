@@ -3,42 +3,42 @@ using FinancialNanoGateway.Domain.Models;
 namespace FinancialNanoGateway.Application.Abstractions;
 
 /// <summary>
-/// Метрики платежного домена.
+/// Metrics for the payment domain.
 /// </summary>
 public interface IPaymentMetrics
 {
     /// <summary>
-    /// API принял валидный запрос на создание платежа.
+    /// The API accepted a valid request to create a payment.
     /// </summary>
     void PaymentRequested(Payment payment);
 
     /// <summary>
-    /// Платеж успешно поставлен во внутреннюю очередь обработки.
+    /// The payment was successfully placed on the internal processing queue.
     /// </summary>
     void PaymentEnqueued(Payment payment);
 
     /// <summary>
-    /// Платеж забран из очереди или удален из нее при ошибке постановки.
+    /// The payment was taken from the queue, or removed from it after a failed enqueue.
     /// </summary>
     void PaymentDequeued(Payment payment);
 
     /// <summary>
-    /// Background worker начал обработку платежа.
+    /// The background worker started processing the payment.
     /// </summary>
     void PaymentProcessingStarted(Payment payment);
 
     /// <summary>
-    /// Background worker успешно завершил обработку платежа.
+    /// The background worker finished processing the payment successfully.
     /// </summary>
     void PaymentProcessingCompleted(Payment payment, TimeSpan duration);
 
     /// <summary>
-    /// Background worker завершил обработку платежа с ошибкой.
+    /// The background worker finished processing the payment with an error.
     /// </summary>
     void PaymentProcessingFailed(Payment payment, string reason, TimeSpan duration);
 
     /// <summary>
-    /// Завершился внешний вызов к банковскому провайдеру.
+    /// An external call to the bank provider finished.
     /// </summary>
     void BankRequestCompleted(Payment payment, string provider, bool succeeded, TimeSpan duration);
 }

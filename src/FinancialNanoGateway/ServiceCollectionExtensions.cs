@@ -31,19 +31,19 @@ public static class ServiceCollectionExtensions
                     .AddAspNetCoreInstrumentation()
                     .AddRuntimeInstrumentation()
                     .AddMeter(PaymentMetrics.MeterName)
-                    // Exemplars: к точкам гистограмм прикрепляется TraceId запроса, который дал замер.
-                    // TraceBased пишет exemplar только если замер сделан внутри засемплированного span-а
+                    // Exemplars: each histogram data point gets the TraceId of the request that produced the sample.
+                    // TraceBased records an exemplar only if the sample was taken inside a sampled span.
                     .SetExemplarFilter(ExemplarFilterType.TraceBased)
-                    // View позволяет переопределить настройки метрики:
+                    // A View lets you override a metric's settings:
                     .AddView(
                         "payment_amount",
                         new ExplicitBucketHistogramConfiguration
                         {
-                            Name = "payment_amount_custom_name", // Изменить имя метрики
-                            Description = "Custom description", // Изменить описание метрики
-                            CardinalityLimit = 10, // Настроить кардинальность метрики
-                            TagKeys = ["restrictedTag"], // Отфильтровать ненужные теги (Labels) для экономии места в хранилище
-                            Boundaries = [1, 5, 10, 25, 50, 100, 250, 500, 1_000] // Настроить корзины (Buckets) гистограмм для точного расчета P95/P99
+                            Name = "payment_amount_custom_name", // Change the metric name
+                            Description = "Custom description", // Change the metric description
+                            CardinalityLimit = 10, // Tune the metric's cardinality
+                            TagKeys = ["restrictedTag"], // Drop unneeded tags (labels) to save storage space
+                            Boundaries = [1, 5, 10, 25, 50, 100, 250, 500, 1_000] // Tune histogram buckets for accurate P95/P99
                         })
                     .AddView(
                         "payment_queue_wait_duration_milliseconds",
@@ -69,23 +69,23 @@ public static class ServiceCollectionExtensions
             openTelemetry.WithTracing(tracing =>
             {
                 tracing
-                    // Auto-instrumentation: создает SERVER-span на каждый входящий HTTP-запрос.
-                    // Это корень trace-а на стороне запроса, к которому цепляется наш PRODUCER-span.
+                    // Auto-instrumentation: creates a SERVER span for every incoming HTTP request.
+                    // This is the root of the request-side trace, to which our PRODUCER span attaches.
                     .AddAspNetCoreInstrumentation()
-                    // Регистрируем наш доменный ActivitySource. Без AddSource его span-ы будут проигнорированы.
+                    // Register our domain ActivitySource. Without AddSource its spans would be ignored.
                     .AddSource(PaymentTracing.ActivitySourceName)
-                    // Sampling решает, какие trace-ы записать.
-                    // ParentBased гарантирует консистентность: если родитель засемплирован - ребенок тоже.
-                    // Обычно: используют head-sampling (доля, напр. 10%) или tail-sampling
-                    // на Collector-е (записать только медленные/ошибочные trace-ы) ради объема хранилища.
+                    // Sampling decides which traces to record.
+                    // ParentBased guarantees consistency: if the parent is sampled, the child is too.
+                    // In practice: use head sampling (a fraction, e.g. 10%) or tail sampling
+                    // on the Collector (record only slow/error traces) to control storage volume.
                     .SetSampler(new ParentBasedSampler(new AlwaysOnSampler()))
                     .AddOtlpExporter();
             });
 
-            // Логи идут через тот же unified-builder, поэтому делят Resource (service.name и пр.) с метриками
-            // и трейсами. Провайдер - мост: каждый ILogger-запись превращается в OTLP log record. Главное -
-            // если запись сделана внутри активного Activity, в нее автоматически попадают TraceId/SpanId.
-            // Именно это связывает логи с трейсами (pivot span <-> logs в Grafana) без нашего ручного кода.
+            // Logs go through the same unified builder, so they share the Resource (service.name, etc.) with metrics
+            // and traces. The provider is a bridge: every ILogger record becomes an OTLP log record. The key point -
+            // if a record is emitted inside an active Activity, it automatically carries TraceId/SpanId.
+            // That is exactly what links logs to traces (span <-> logs pivot in Grafana) without any manual code.
             openTelemetry.WithLogging(logging => logging.AddOtlpExporter());
 
             services.Configure<OpenTelemetryLoggerOptions>(options =>

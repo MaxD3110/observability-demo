@@ -40,11 +40,11 @@ public sealed class PaymentProcessor : BackgroundService
         var payment = messageEnvelopeDto.Payment;
         var stopwatch = Stopwatch.StartNew();
 
-        // CONSUMER-span: новый trace, связанный link-ом с producer-ом (контекст берется из заголовков).
+        // CONSUMER span: a new trace linked to the producer (context is taken from the headers).
         using var activity = _tracing.StartProcess(payment, messageEnvelopeDto.Headers);
 
-        // Scope добавляет PaymentId/Currency ко ВСЕМ логам внутри (включая логи банковского сервиса),
-        // не таская их явно в каждый вызов. С IncludeScopes они становятся атрибутами лога в Loki.
+        // Scope attaches PaymentId/Currency to ALL logs inside (including the bank service's logs),
+        // without passing them explicitly into every call. With IncludeScopes they become log attributes in Loki.
         using var scope = _logger.BeginScope(new Dictionary<string, object>
         {
             ["PaymentId"] = payment.Id,

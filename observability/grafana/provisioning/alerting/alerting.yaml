@@ -1,60 +1,58 @@
-﻿# Grafana загружает правила алертов, контактные точки и шаблоны уведомлений без ручной настройки через UI.
+﻿# Grafana loads alert rules, contact points and notification templates with no manual setup through the UI.
 
 apiVersion: 1
 
-# 0. Шаблон уведомления.
-# Без него Telegram присылает дефолтный дамп полей ([no value], Labels, Silence URL и т.д.).
-# Здесь делаем короткое читаемое сообщение в HTML.
+# 0. Notification template.
+# Without it Telegram sends the default field dump ([no value], Labels, Silence URL, etc.)
 templates:
   - orgId: 1
     name: telegram.message
     template: |
       {{ define "telegram.message" -}}
-      {{ if eq .Status "firing" }}🔴 <b>ТРЕВОГА</b>{{ else }}✅ <b>ВОССТАНОВЛЕНО</b>{{ end }} · {{ .Alerts | len }}
+      {{ if eq .Status "firing" }}🔴 <b>FIRING</b>{{ else }}✅ <b>RESOLVED</b>{{ end }} · {{ .Alerts | len }}
       {{ range .Alerts -}}
       ━━━━━━━━━━━━━━
       <b>{{ .Labels.alertname }}</b>
-      {{ if .Labels.provider }}Провайдер: <b>{{ .Labels.provider }}</b>
+      {{ if .Labels.provider }}Provider: <b>{{ .Labels.provider }}</b>
       {{ end }}{{ if .Annotations.summary }}{{ .Annotations.summary }}
-      {{ end }}Важность: {{ .Labels.severity }}
-      {{ if .DashboardURL }}<a href="{{ .DashboardURL }}">Открыть дашборд</a>{{ end }}
+      {{ end }}Severity: {{ .Labels.severity }}
+      {{ if .DashboardURL }}<a href="{{ .DashboardURL }}">Open dashboard</a>{{ end }}
       {{ end -}}
       {{ end }}
 
-# 1. Контактные точки (Contact Points)
+# 1. Contact Points
 contactPoints:
   - orgId: 1
     name: "Telegram Receiver"
     receivers:
       - uid: telegram_dev_team
         type: telegram
-        disableResolveMessage: false # Присылать уведомление, когда всё починилось
+        disableResolveMessage: false # Send a notification when everything has recovered
         settings:
           bottoken: "$__env{TELEGRAM_BOT_TOKEN}"
           chatid: "8378060934"
           parse_mode: "HTML"
           message: '{{ template "telegram.message" . }}'
 
-# 2. Политики уведомлений (Notification Policies)
-# Это логика: какой алерт куда отправлять
+# 2. Notification Policies
+# The routing logic: which alert goes where.
 policies:
   - orgId: 1
     receiver: "Telegram Receiver"
     group_by: ["alertname", "provider"]
-    group_wait: 10s      # Сколько ждать перед первой отправкой
-    group_interval: 1m   # Пауза перед отправкой новых алертов в той же группе
-    repeat_interval: 1h  # Как часто напоминать об активном алерте
+    group_wait: 10s      # How long to wait before the first notification
+    group_interval: 1m   # Pause before sending new alerts in the same group
+    repeat_interval: 1h  # How often to remind about an active alert
 
-# 3. Группы алертов и правила (Evaluation Groups)
+# 3. Evaluation Groups (alert rules)
 groups:
   - orgId: 1
-    name: "Окно проверки 10s"
+    name: "10s evaluation window"
     folder: "Financial Nano Gateway"
     interval: 10s
     rules:
       - uid: bank_failure_id
-        # Заголовок статичный: в title Grafana НЕ подставляет $labels. Провайдер уходит в аннотацию и метки.
-        title: 'Высокий % ошибочных исходов по банку'
+        title: 'High % of failed bank outcomes'
         condition: C
         for: 1m
         data:
@@ -66,10 +64,6 @@ groups:
                 type: prometheus
                 uid: prometheus
               editorMode: code
-              # NoData-устойчивый запрос. Проблема исходной версии: при нуле ошибок у провайдера
-              # числитель (outcome="failed") не возвращал серию -> деление давало пустоту -> DatasourceNoData.
-              # Приём `or (<знаменатель> * 0)` гарантирует 0 для каждого провайдера, у кого есть трафик.
-              # Интервал зафиксирован [5m] вместо $__rate_interval - детерминированно и совпадает с окном 300s.
               expr: '100 * (sum by (provider) (rate(bank_request_value_total{outcome="failed"}[5m])) or (sum by (provider) (rate(bank_request_value_total[5m])) * 0)) / clamp_min(sum by (provider) (rate(bank_request_value_total[5m])), 0.001)'
               instant: true
               intervalMs: 10000
@@ -100,11 +94,10 @@ groups:
               type: threshold
         dashboardUid: adxhhjv
         panelId: 43
-        # Запрос теперь всегда возвращает значение, поэтому "нет данных" = реально мёртвый источник, а не норма.
         noDataState: OK
         execErrState: Error
         annotations:
-          summary: 'Доля ошибочных исходов {{ $values.B.Value | printf "%.1f" }}% за 5 минут (порог 10%).'
+          summary: 'Failed-outcome ratio {{ $values.B.Value | printf "%.1f" }}% over 5 minutes (threshold 10%).'
           __dashboardUid__: adxhhjv
           __panelId__: "43"
         labels:

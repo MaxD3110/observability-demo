@@ -8,12 +8,11 @@ receivers:
 
 processors:
   memory_limiter:
-    # Защищает Collector от OOM (out of memory) при всплесках телеметрии.
+    # Protects the Collector from OOM (out of memory) during telemetry spikes.
     check_interval: 1s
     limit_mib: 384
 
   batch:
-    # Отправляет данные пачками, что обычно эффективнее одиночных отправок.
     timeout: 5s
     send_batch_size: 1024
 
@@ -21,20 +20,20 @@ exporters:
   prometheus:
     endpoint: 0.0.0.0:8889
     resource_to_telemetry_conversion:
-      # service.name и deployment.environment становятся Prometheus labels.
+      # service.name and deployment.environment become Prometheus labels.
       enabled: true
-    # Exemplars экспонируются только в формате OpenMetrics. Без этого флага Prometheus
-    # не увидит привязку точек гистограмм к TraceId.
+    # Exemplars are only exposed in the OpenMetrics format. Without this flag Prometheus
+    # will not see the link from histogram data points to TraceId.
     enable_open_metrics: true
 
   otlp/tempo:
-    # Трейсы уходят в Tempo по OTLP/gRPC.
+    # Traces go to Tempo over OTLP/gRPC.
     endpoint: tempo:4317
     tls:
       insecure: true
 
   otlphttp/loki:
-    # Логи уходят в Loki по нативному OTLP-эндпоинту (/otlp/v1/logs добавляется автоматически).
+    # Logs go to Loki via its native OTLP endpoint (/otlp/v1/logs is appended automatically).
     endpoint: http://loki:3100/otlp
 
 service:
@@ -58,7 +57,7 @@ service:
     logs:
       level: info
     metrics:
-      # Метрики самого Collector. Их scrape-ит отдельный Prometheus job.
+      # The Collector's own metrics. A separate Prometheus job scrapes them.
       level: normal
       readers:
         - pull:

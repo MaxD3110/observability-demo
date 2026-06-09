@@ -22,7 +22,7 @@
           "enable": true,
           "hide": true,
           "iconColor": "rgba(0, 211, 255, 1)",
-          "name": "Аннотации и alerts",
+          "name": "Annotations & alerts",
           "builtIn": true
         }
       }
@@ -34,7 +34,7 @@
         "kind": "Panel",
         "spec": {
           "id": 10,
-          "title": "Успешная сумма по валютам",
+          "title": "Successful amount by currency",
           "description": "",
           "links": [],
           "data": {
@@ -120,7 +120,7 @@
         "kind": "Panel",
         "spec": {
           "id": 11,
-          "title": "Потенциальная потеря по валютам",
+          "title": "Potential loss by currency",
           "description": "",
           "links": [],
           "data": {
@@ -206,7 +206,7 @@
         "kind": "Panel",
         "spec": {
           "id": 12,
-          "title": "Средний обработанный чек",
+          "title": "Average processed amount",
           "description": "",
           "links": [],
           "data": {
@@ -223,7 +223,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "sum(rate(payment_value_total{currency=~\"$currency\", outcome=\"success\"}[$__range])) / clamp_min(sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"success\"}[$__range])), 0.001)",
-                        "legendFormat": "средний чек",
+                        "legendFormat": "average amount",
                         "range": true
                       }
                     },
@@ -290,7 +290,7 @@
         "kind": "Panel",
         "spec": {
           "id": 13,
-          "title": "Распределение сумм платежей",
+          "title": "Payment amount distribution",
           "description": "",
           "links": [],
           "data": {
@@ -388,7 +388,7 @@
         "kind": "Panel",
         "spec": {
           "id": 15,
-          "title": "Распределение трафика по банкам",
+          "title": "Traffic distribution by bank",
           "description": "",
           "links": [],
           "data": {
@@ -508,7 +508,7 @@
         "kind": "Panel",
         "spec": {
           "id": 16,
-          "title": "Успешность по банкам",
+          "title": "Success rate by bank",
           "description": "",
           "links": [],
           "data": {
@@ -604,7 +604,7 @@
         "kind": "Panel",
         "spec": {
           "id": 17,
-          "title": "P95 задержки банка",
+          "title": "Bank latency P95",
           "description": "",
           "links": [],
           "data": {
@@ -701,7 +701,7 @@
         "kind": "Panel",
         "spec": {
           "id": 18,
-          "title": "Динамика задержки банков",
+          "title": "Bank latency over time",
           "description": "",
           "links": [],
           "data": {
@@ -900,7 +900,7 @@
         "kind": "Panel",
         "spec": {
           "id": 19,
-          "title": "Деньги через банки: успех и потенциальная потеря",
+          "title": "Money via banks: success vs potential loss",
           "description": "",
           "links": [],
           "data": {
@@ -917,7 +917,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "sum by (provider) (rate(bank_request_value_total{currency=~\"$currency\", provider=~\"$provider\", outcome=\"success\"}[$__rate_interval]))",
-                        "legendFormat": "{{provider}} проведено",
+                        "legendFormat": "{{provider}} settled",
                         "range": true
                       }
                     },
@@ -935,7 +935,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "-(sum by (provider) (rate(bank_request_value_total{currency=~\"$currency\", provider=~\"$provider\", outcome=\"failed\"}[$__rate_interval])))",
-                        "legendFormat": "{{provider}} потеря",
+                        "legendFormat": "{{provider}} loss",
                         "range": true
                       }
                     },
@@ -1031,7 +1031,7 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "CheetahBank проведено"
+                      "options": "CheetahBank settled"
                     },
                     "properties": [
                       {
@@ -1046,7 +1046,7 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "TortoiseBank проведено"
+                      "options": "TortoiseBank settled"
                     },
                     "properties": [
                       {
@@ -1061,7 +1061,7 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "CheetahBank потеря"
+                      "options": "CheetahBank loss"
                     },
                     "properties": [
                       {
@@ -1076,7 +1076,7 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "TortoiseBank потеря"
+                      "options": "TortoiseBank loss"
                     },
                     "properties": [
                       {
@@ -1098,7 +1098,7 @@
         "kind": "Panel",
         "spec": {
           "id": 2,
-          "title": "Входящий поток",
+          "title": "Incoming flow",
           "description": "",
           "links": [],
           "data": {
@@ -1114,7 +1114,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(rate(payment_requests_total{currency=~\"$currency\"}[$__rate_interval]))",
-                        "legendFormat": "запросы/сек"
+                        "legendFormat": "requests/sec"
                       }
                     },
                     "refId": "A",
@@ -1180,7 +1180,7 @@
         "kind": "Panel",
         "spec": {
           "id": 20,
-          "title": "Рейтинг банков: трафик, успешность, P95",
+          "title": "Bank ranking: traffic, success, P95",
           "description": "",
           "links": [],
           "data": {
@@ -1309,7 +1309,7 @@
                       },
                       {
                         "id": "displayName",
-                        "value": "% успешных запросов"
+                        "value": "% successful requests"
                       }
                     ]
                   },
@@ -1355,7 +1355,7 @@
                     "properties": [
                       {
                         "id": "displayName",
-                        "value": "Банк"
+                        "value": "Bank"
                       }
                     ]
                   },
@@ -1375,7 +1375,7 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "Банк"
+                      "options": "Bank"
                     },
                     "properties": [
                       {
@@ -1399,7 +1399,7 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "% успешных запросов"
+                      "options": "% successful requests"
                     },
                     "properties": [
                       {
@@ -1418,7 +1418,7 @@
         "kind": "Panel",
         "spec": {
           "id": 22,
-          "title": "Воронка платежа во времени",
+          "title": "Payment funnel over time",
           "description": "",
           "links": [],
           "data": {
@@ -1434,7 +1434,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(rate(payment_requests_total{currency=~\"$currency\"}[$__rate_interval]))",
-                        "legendFormat": "принято API"
+                        "legendFormat": "accepted by API"
                       }
                     },
                     "refId": "A",
@@ -1450,7 +1450,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(rate(payment_enqueued_total{currency=~\"$currency\"}[$__rate_interval]))",
-                        "legendFormat": "поставлено в очередь"
+                        "legendFormat": "enqueued"
                       }
                     },
                     "refId": "B",
@@ -1466,7 +1466,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"success\"}[$__rate_interval]))",
-                        "legendFormat": "успешно обработано"
+                        "legendFormat": "processed successfully"
                       }
                     },
                     "refId": "C",
@@ -1482,7 +1482,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"failed\"}[$__rate_interval]))",
-                        "legendFormat": "ошибка обработки"
+                        "legendFormat": "processing error"
                       }
                     },
                     "refId": "D",
@@ -1577,7 +1577,7 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "ошибка обработки"
+                      "options": "processing error"
                     },
                     "properties": [
                       {
@@ -1592,7 +1592,7 @@
                   {
                     "matcher": {
                       "id": "byName",
-                      "options": "успешно обработано"
+                      "options": "processed successfully"
                     },
                     "properties": [
                       {
@@ -1614,7 +1614,7 @@
         "kind": "Panel",
         "spec": {
           "id": 23,
-          "title": "Исходы обработки",
+          "title": "Processing outcomes",
           "description": "",
           "links": [],
           "data": {
@@ -1630,7 +1630,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(increase(payment_processed_total{currency=~\"$currency\", outcome=\"success\"}[$__range]))",
-                        "legendFormat": "успешно"
+                        "legendFormat": "success"
                       }
                     },
                     "refId": "A",
@@ -1646,7 +1646,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(increase(payment_processed_total{currency=~\"$currency\", outcome=\"failed\"}[$__range]))",
-                        "legendFormat": "ошибка"
+                        "legendFormat": "error"
                       }
                     },
                     "refId": "B",
@@ -1707,7 +1707,7 @@
                     "matcher": {
                       "id": "byName",
                       "scope": "series",
-                      "options": "ошибка"
+                      "options": "error"
                     },
                     "properties": [
                       {
@@ -1729,7 +1729,7 @@
         "kind": "Panel",
         "spec": {
           "id": 24,
-          "title": "Причины ошибок",
+          "title": "Error reasons",
           "description": "",
           "links": [],
           "data": {
@@ -1812,7 +1812,7 @@
         "kind": "Panel",
         "spec": {
           "id": 25,
-          "title": "Доля ошибок по валютам",
+          "title": "Error ratio by currency",
           "description": "",
           "links": [],
           "data": {
@@ -1908,7 +1908,7 @@
         "kind": "Panel",
         "spec": {
           "id": 27,
-          "title": "Состояние очереди и worker-а",
+          "title": "Queue and worker state",
           "description": "",
           "links": [],
           "data": {
@@ -1924,7 +1924,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(payment_queue_depth)",
-                        "legendFormat": "ожидают в очереди"
+                        "legendFormat": "waiting in queue"
                       }
                     },
                     "refId": "A",
@@ -1940,7 +1940,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(payment_active_processing)",
-                        "legendFormat": "в обработке"
+                        "legendFormat": "processing"
                       }
                     },
                     "refId": "B",
@@ -2041,7 +2041,7 @@
         "kind": "Panel",
         "spec": {
           "id": 28,
-          "title": "Сколько платеж ждет в очереди",
+          "title": "How long a payment waits in queue",
           "description": "",
           "links": [],
           "data": {
@@ -2058,7 +2058,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "histogram_quantile(0.50, sum(rate(payment_queue_wait_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
-                        "legendFormat": "ожидание p50",
+                        "legendFormat": "wait p50",
                         "range": true
                       }
                     },
@@ -2076,7 +2076,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "histogram_quantile(0.95, sum(rate(payment_queue_wait_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
-                        "legendFormat": "ожидание p95",
+                        "legendFormat": "wait p95",
                         "range": true
                       }
                     },
@@ -2095,7 +2095,7 @@
                         "editorMode": "code",
                         "expr": "histogram_quantile(0.99, sum(rate(payment_queue_wait_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
                         "instant": false,
-                        "legendFormat": "ожидание p99",
+                        "legendFormat": "wait p99",
                         "range": true
                       }
                     },
@@ -2197,7 +2197,7 @@
         "kind": "Panel",
         "spec": {
           "id": 29,
-          "title": "Длительность обработки платежа",
+          "title": "Payment processing duration",
           "description": "",
           "links": [],
           "data": {
@@ -2214,7 +2214,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "histogram_quantile(0.50, sum(rate(payment_processing_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
-                        "legendFormat": "обработка p50",
+                        "legendFormat": "processing p50",
                         "range": true
                       }
                     },
@@ -2233,7 +2233,7 @@
                         "editorMode": "code",
                         "exemplar": true,
                         "expr": "histogram_quantile(0.95, sum(rate(payment_processing_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
-                        "legendFormat": "обработка p95",
+                        "legendFormat": "processing p95",
                         "range": true
                       }
                     },
@@ -2251,7 +2251,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "histogram_quantile(0.99, sum(rate(payment_processing_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
-                        "legendFormat": "обработка p99",
+                        "legendFormat": "processing p99",
                         "range": true
                       }
                     },
@@ -2353,7 +2353,7 @@
         "kind": "Panel",
         "spec": {
           "id": 3,
-          "title": "Успешность платежей",
+          "title": "Payment success rate",
           "description": "",
           "links": [],
           "data": {
@@ -2370,7 +2370,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"success\"}[$__range])) / sum(rate(payment_processed_total{currency=~\"$currency\"}[$__range])) * 100",
-                        "legendFormat": "успешность",
+                        "legendFormat": "success rate",
                         "range": true
                       }
                     },
@@ -2456,7 +2456,7 @@
         "kind": "Panel",
         "spec": {
           "id": 31,
-          "title": "Сетевой трафик",
+          "title": "Network traffic",
           "description": "",
           "links": [],
           "data": {
@@ -2473,7 +2473,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "sum(rate({__name__=~\"http_server_request_duration_seconds_count|http_server_duration_milliseconds_count\"}[$__rate_interval]))",
-                        "legendFormat": "HTTP запросы",
+                        "legendFormat": "HTTP requests",
                         "range": true
                       }
                     },
@@ -2491,7 +2491,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "sum(rate({__name__=~\"http_server_request_duration_seconds_count|http_server_duration_milliseconds_count\", http_response_status_code=~\"4..|5..\"}[$__rate_interval])) or sum(rate({__name__=~\"http_server_request_duration_seconds_count|http_server_duration_milliseconds_count\", http_status_code=~\"4..|5..\"}[$__rate_interval]))",
-                        "legendFormat": "HTTP ошибки",
+                        "legendFormat": "HTTP errors",
                         "range": true
                       }
                     },
@@ -2592,7 +2592,7 @@
         "kind": "Panel",
         "spec": {
           "id": 32,
-          "title": "Сетевая задержка",
+          "title": "Network latency",
           "description": "",
           "links": [],
           "data": {
@@ -2786,7 +2786,7 @@
         "kind": "Panel",
         "spec": {
           "id": 34,
-          "title": "Средний потерянный чек",
+          "title": "Average lost amount",
           "description": "",
           "links": [],
           "data": {
@@ -2803,7 +2803,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "sum(rate(payment_value_total{currency=~\"$currency\", outcome=\"failed\"}[$__range])) / clamp_min(sum(rate(payment_processed_total{currency=~\"$currency\", outcome=\"failed\"}[$__range])), 0.001)",
-                        "legendFormat": "средний чек",
+                        "legendFormat": "average amount",
                         "range": true
                       }
                     },
@@ -2870,7 +2870,7 @@
         "kind": "Panel",
         "spec": {
           "id": 35,
-          "title": "Общее использование памяти",
+          "title": "Total memory usage",
           "description": "",
           "links": [],
           "data": {
@@ -3034,7 +3034,7 @@
         "kind": "Panel",
         "spec": {
           "id": 36,
-          "title": "Размер кучи",
+          "title": "Heap size",
           "description": "",
           "links": [],
           "data": {
@@ -3224,7 +3224,7 @@
         "kind": "Panel",
         "spec": {
           "id": 37,
-          "title": "Фрагментация кучи",
+          "title": "Heap fragmentation",
           "description": "",
           "links": [],
           "data": {
@@ -3414,7 +3414,7 @@
         "kind": "Panel",
         "spec": {
           "id": 38,
-          "title": "Сборка мусора",
+          "title": "Garbage collection",
           "description": "",
           "links": [],
           "data": {
@@ -3535,7 +3535,7 @@
         "kind": "Panel",
         "spec": {
           "id": 39,
-          "title": "Ошибки",
+          "title": "Errors",
           "description": "",
           "links": [],
           "data": {
@@ -3652,7 +3652,7 @@
         "kind": "Panel",
         "spec": {
           "id": 4,
-          "title": "Проведенная сумма",
+          "title": "Settled amount",
           "description": "",
           "links": [],
           "data": {
@@ -3669,7 +3669,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "sum(increase(payment_value_total{currency=~\"$currency\", outcome=\"success\"}[$__range]))",
-                        "legendFormat": "успешная сумма",
+                        "legendFormat": "successful amount",
                         "range": true
                       }
                     },
@@ -3736,7 +3736,7 @@
         "kind": "Panel",
         "spec": {
           "id": 40,
-          "title": "Потоки в пуле потоков",
+          "title": "Thread pool threads",
           "description": "",
           "links": [],
           "data": {
@@ -3816,7 +3816,7 @@
         "kind": "Panel",
         "spec": {
           "id": 41,
-          "title": "Очередь в пуле потоков",
+          "title": "Thread pool queue",
           "description": "",
           "links": [],
           "data": {
@@ -3896,7 +3896,7 @@
         "kind": "Panel",
         "spec": {
           "id": 42,
-          "title": "Сетевые ошибки",
+          "title": "Network errors",
           "description": "",
           "links": [],
           "data": {
@@ -4095,7 +4095,7 @@
         "kind": "Panel",
         "spec": {
           "id": 43,
-          "title": "% ошибочных исходов по банкам ",
+          "title": "% of failed outcomes by bank ",
           "description": "",
           "links": [],
           "data": {
@@ -4112,7 +4112,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "100 * sum by (provider) (rate(bank_request_value_total{currency=~\"$currency\", provider=~\"$provider\", outcome=\"failed\"}[$__rate_interval])) / clamp_min(sum by (provider) (rate(bank_request_value_total{currency=~\"$currency\", provider=~\"$provider\"}[$__rate_interval])), 0.001)",
-                        "legendFormat": "{{provider}} % ошибок",
+                        "legendFormat": "{{provider}} % errors",
                         "range": true
                       }
                     },
@@ -4215,7 +4215,7 @@
         "kind": "Panel",
         "spec": {
           "id": 44,
-          "title": "% ошибочных исходов по банкам",
+          "title": "% of failed outcomes by bank",
           "description": "",
           "links": [],
           "data": {
@@ -4302,7 +4302,7 @@
         "kind": "Panel",
         "spec": {
           "id": 5,
-          "title": "Потенциальная потеря",
+          "title": "Potential loss",
           "description": "",
           "links": [],
           "data": {
@@ -4318,7 +4318,7 @@
                       "version": "v0",
                       "spec": {
                         "expr": "sum(increase(payment_value_total{currency=~\"$currency\", outcome=\"failed\"}[$__range]))",
-                        "legendFormat": "потенциальная потеря"
+                        "legendFormat": "potential loss"
                       }
                     },
                     "refId": "A",
@@ -4384,7 +4384,7 @@
         "kind": "Panel",
         "spec": {
           "id": 6,
-          "title": "P95 обработки",
+          "title": "Processing P95",
           "description": "",
           "links": [],
           "data": {
@@ -4471,7 +4471,7 @@
         "kind": "Panel",
         "spec": {
           "id": 7,
-          "title": "Глубина очереди",
+          "title": "Queue depth",
           "description": "",
           "links": [],
           "data": {
@@ -4488,7 +4488,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "sum(payment_queue_depth)",
-                        "legendFormat": "очередь",
+                        "legendFormat": "queue",
                         "range": true
                       }
                     },
@@ -4558,7 +4558,7 @@
         "kind": "Panel",
         "spec": {
           "id": 9,
-          "title": "Денежный поток: проведено против потенциальной потери",
+          "title": "Cash flow: settled vs potential loss",
           "description": "",
           "links": [],
           "data": {
@@ -4575,7 +4575,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "-(sum by (currency) (rate(payment_value_total{currency=~\"$currency\", outcome=\"failed\"}[$__rate_interval])))",
-                        "legendFormat": "потеря / {{currency}}",
+                        "legendFormat": "loss / {{currency}}",
                         "range": true
                       }
                     },
@@ -4593,7 +4593,7 @@
                       "spec": {
                         "editorMode": "code",
                         "expr": "sum by (currency) (rate(payment_value_total{currency=~\"$currency\", outcome=\"success\"}[$__rate_interval]))",
-                        "legendFormat": "проведено / {{currency}}",
+                        "legendFormat": "settled / {{currency}}",
                         "range": true
                       }
                     },
@@ -4690,7 +4690,7 @@
                     "matcher": {
                       "id": "byRegexp",
                       "scope": "series",
-                      "options": "/failed|потеря/"
+                      "options": "/failed|loss/"
                     },
                     "properties": [
                       {
@@ -4706,7 +4706,7 @@
                     "matcher": {
                       "id": "byRegexp",
                       "scope": "series",
-                      "options": "/success|проведено/"
+                      "options": "/success|settled/"
                     },
                     "properties": [
                       {
@@ -4732,7 +4732,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "Командный центр",
+              "title": "Command center",
               "collapse": false,
               "layout": {
                 "kind": "GridLayout",
@@ -4824,7 +4824,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "Финансовая картина",
+              "title": "Financial picture",
               "collapse": false,
               "layout": {
                 "kind": "GridLayout",
@@ -4916,7 +4916,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "Сравнение банковских провайдеров",
+              "title": "Bank provider comparison",
               "collapse": false,
               "layout": {
                 "kind": "GridLayout",
@@ -5008,7 +5008,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "Надежность платежного потока",
+              "title": "Payment flow reliability",
               "collapse": false,
               "layout": {
                 "kind": "GridLayout",
@@ -5100,7 +5100,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "Производительность и очередь",
+              "title": "Performance and queue",
               "collapse": false,
               "layout": {
                 "kind": "GridLayout",
@@ -5206,7 +5206,7 @@
           {
             "kind": "RowsLayoutRow",
             "spec": {
-              "title": "Платформа",
+              "title": "Platform",
               "collapse": false,
               "layout": {
                 "kind": "GridLayout",
@@ -5319,7 +5319,7 @@
       "metrics",
       "otel",
       "prometheus",
-      "финансы"
+      "finance"
     ],
     "timeSettings": {
       "timezone": "browser",
@@ -5336,7 +5336,7 @@
       "hideTimepicker": false,
       "fiscalYearStartMonth": 0
     },
-    "title": "Financial Nano Gateway: платежи, банки и деньги",
+    "title": "Financial Nano Gateway: payments, banks and money",
     "variables": [
       {
         "kind": "QueryVariable",
@@ -5346,7 +5346,7 @@
             "text": "",
             "value": ""
           },
-          "label": "Валюта",
+          "label": "Currency",
           "hide": "dontHide",
           "refresh": "onTimeRangeChanged",
           "skipUrlSync": false,
@@ -5378,7 +5378,7 @@
             "text": "",
             "value": ""
           },
-          "label": "Банк",
+          "label": "Bank",
           "hide": "dontHide",
           "refresh": "onTimeRangeChanged",
           "skipUrlSync": false,
