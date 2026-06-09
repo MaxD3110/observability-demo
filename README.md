@@ -1,3 +1,6 @@
+[![LinkedIn][linkedin-shield]][linkedin-url] [![GitHub][github-shield]][github-url] [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-000?logo=opentelemetry&logoColor=fff)](#)
+<div id="readme-top"></div>
+
 # Financial Nano-Gateway: Observability Demo
 
 ---
@@ -89,7 +92,7 @@ So a "spike on the latency graph" unfolds in a couple of clicks into the specifi
 
 ## Alerting
 
-Alerts are configured as Infrastructure as Code. Grafana automatically picks up the rules from ./provisioning/alerting. There is an alert on the % of failed bank outcomes, delivered to Telegram through a custom, readable notification template (instead of the default field dump). The bot token is supplied via an environment variable (`.env`, git-ignored), not stored in the repo.
+Alerts are configured as Infrastructure as Code. Grafana automatically picks up the rules from ./provisioning/alerting. There is an alert on the % of failed bank outcomes, delivered to Telegram through a custom, readable notification template. The bot token is supplied via an environment variable (`.env`, git-ignored), not stored in the repo.
 
 ![Alerting Demo](./assets/4.png)
 
@@ -114,3 +117,7 @@ Intended for monitoring external integrations and the quality of provider perfor
 Under-the-hood metrics of the application itself, needed for deep performance analysis and debugging.
 
 ![Technical Dashboard](./assets/3.png)
+
+<p align="right">
+   <a href="#readme-top">Back to top ^</a>
+</p>
