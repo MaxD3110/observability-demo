@@ -1,4 +1,5 @@
 using FinancialNanoGateway.Application.Abstractions;
+using FinancialNanoGateway.Application.Logging;
 using FinancialNanoGateway.Domain.Exceptions;
 using FinancialNanoGateway.Domain.Models;
 using FinancialNanoGateway.Infrastructure.Options;
@@ -12,21 +13,26 @@ public sealed class BankBIntegrationService : IBankIntegrationService
     private readonly IOptionsMonitor<BankBIntegrationOptions> _options;
     private readonly IPaymentMetrics _metrics;
     private readonly IPaymentTracing _tracing;
+    private readonly ILogger<BankBIntegrationService> _logger;
 
     public BankBIntegrationService(
         IOptionsMonitor<BankBIntegrationOptions> options,
         IPaymentMetrics metrics,
-        IPaymentTracing tracing)
+        IPaymentTracing tracing,
+        ILogger<BankBIntegrationService> logger)
     {
         _options = options;
         _metrics = metrics;
         _tracing = tracing;
+        _logger = logger;
     }
 
     public async Task ProcessPaymentAsync(Payment payment, CancellationToken cancellationToken)
     {
         using var activity = _tracing.StartBankRequest(payment, _options.CurrentValue.ProviderName);
-        
+
+        PaymentLog.BankRequestStarting(_logger, payment.Id, _options.CurrentValue.ProviderName);
+
         var stopwatch = Stopwatch.StartNew();
         var succeeded = false;
 

@@ -51,6 +51,7 @@ services:
       - ./observability/otel-collector/config.yaml:/etc/otelcol/config.yaml:ro
     depends_on:
       - tempo
+      - loki
     restart: unless-stopped
 
   tempo:
@@ -64,6 +65,16 @@ services:
       - tempo-data:/var/tempo
     restart: unless-stopped
 
+  loki:
+    image: grafana/loki:3.4.2
+    command: ["-config.file=/etc/loki/loki.yaml"]
+    expose:
+      - "3100"
+    volumes:
+      - ./observability/loki/loki.yaml:/etc/loki/loki.yaml:ro
+      - loki-data:/loki
+    restart: unless-stopped
+
   prometheus:
     image: prom/prometheus:v3.5.3
     command:
@@ -71,6 +82,8 @@ services:
       - "--storage.tsdb.path=/prometheus"
       - "--storage.tsdb.retention.time=15d"
       - "--storage.tsdb.retention.size=2GB"
+      # Включает хранение exemplars (привязка точек гистограмм к TraceId). Без флага Prometheus их отбрасывает.
+      - "--enable-feature=exemplar-storage"
     ports:
       - "9090:9090"
     volumes:
@@ -97,6 +110,7 @@ services:
     depends_on:
       - prometheus
       - tempo
+      - loki
     restart: unless-stopped
 
 # Генератор фейковой нагрузки, никакой другой роли не играет
@@ -124,3 +138,4 @@ volumes:
   prometheus-data:
   grafana-data:
   tempo-data:
+  loki-data:

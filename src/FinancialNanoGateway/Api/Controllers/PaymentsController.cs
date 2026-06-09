@@ -1,7 +1,7 @@
-using FinancialNanoGateway.Application;
 using FinancialNanoGateway.Application.Abstractions;
 using FinancialNanoGateway.Application.Dtos;
 using FinancialNanoGateway.Application.Dtos.Response;
+using FinancialNanoGateway.Application.Logging;
 using FinancialNanoGateway.Domain.Models;
 using Microsoft.AspNetCore.Mvc;
 
@@ -14,12 +14,18 @@ public sealed class PaymentsController : ControllerBase
     private readonly IPaymentQueue _paymentQueue;
     private readonly IPaymentMetrics _metrics;
     private readonly IPaymentTracing _tracing;
+    private readonly ILogger<PaymentsController> _logger;
 
-    public PaymentsController(IPaymentQueue paymentQueue, IPaymentMetrics metrics, IPaymentTracing tracing)
+    public PaymentsController(
+        IPaymentQueue paymentQueue,
+        IPaymentMetrics metrics,
+        IPaymentTracing tracing,
+        ILogger<PaymentsController> logger)
     {
         _paymentQueue = paymentQueue;
         _metrics = metrics;
         _tracing = tracing;
+        _logger = logger;
     }
 
     /// <summary>
@@ -54,6 +60,8 @@ public sealed class PaymentsController : ControllerBase
         {
             await _paymentQueue.EnqueueAsync(new PaymentMessageEnvelopeDto(payment, headers), cancellationToken);
         }
+
+        PaymentLog.PaymentAccepted(_logger, payment.Id, payment.Currency);
 
         return Accepted(new PaymentResponseDto(payment.Id, "Queued", _paymentQueue.Count));
     }

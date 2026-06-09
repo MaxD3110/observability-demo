@@ -735,6 +735,7 @@
                       "version": "v0",
                       "spec": {
                         "editorMode": "code",
+                        "exemplar": true,
                         "expr": "histogram_quantile(0.95, sum by (provider, le) (rate(bank_request_duration_milliseconds_bucket{currency=~\"$currency\", provider=~\"$provider\"}[$__rate_interval])))",
                         "legendFormat": "{{provider}} p95",
                         "range": true
@@ -2230,6 +2231,7 @@
                       "version": "v0",
                       "spec": {
                         "editorMode": "code",
+                        "exemplar": true,
                         "expr": "histogram_quantile(0.95, sum(rate(payment_processing_duration_milliseconds_bucket{currency=~\"$currency\"}[$__rate_interval])) by (le))",
                         "legendFormat": "обработка p95",
                         "range": true

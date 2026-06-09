@@ -1,5 +1,3 @@
-# Collector принимает OTLP от приложения: метрики публикует в формате Prometheus, трейсы шлет в Tempo.
-
 receivers:
   otlp:
     protocols:
@@ -25,16 +23,22 @@ exporters:
     resource_to_telemetry_conversion:
       # service.name и deployment.environment становятся Prometheus labels.
       enabled: true
+    # Exemplars экспонируются только в формате OpenMetrics. Без этого флага Prometheus
+    # не увидит привязку точек гистограмм к TraceId.
+    enable_open_metrics: true
 
   otlp/tempo:
     # Трейсы уходят в Tempo по OTLP/gRPC.
     endpoint: tempo:4317
     tls:
-      insecure: true # Внутри docker-сети TLS не нужен.
+      insecure: true
+
+  otlphttp/loki:
+    # Логи уходят в Loki по нативному OTLP-эндпоинту (/otlp/v1/logs добавляется автоматически).
+    endpoint: http://loki:3100/otlp
 
 service:
   pipelines:
-    # Один и тот же OTLP receiver кормит две независимые pipeline - метрики и трейсы.
     metrics:
       receivers: [otlp]
       processors: [memory_limiter, batch]
@@ -44,6 +48,11 @@ service:
       receivers: [otlp]
       processors: [memory_limiter, batch]
       exporters: [otlp/tempo]
+
+    logs:
+      receivers: [otlp]
+      processors: [memory_limiter, batch]
+      exporters: [otlphttp/loki]
 
   telemetry:
     logs:

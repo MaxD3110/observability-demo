@@ -1,5 +1,6 @@
 ﻿using FinancialNanoGateway.Infrastructure.Observability;
 using FinancialNanoGateway.Infrastructure.Options;
+using OpenTelemetry.Logs;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
 using OpenTelemetry.Trace;
@@ -30,6 +31,9 @@ public static class ServiceCollectionExtensions
                     .AddAspNetCoreInstrumentation()
                     .AddRuntimeInstrumentation()
                     .AddMeter(PaymentMetrics.MeterName)
+                    // Exemplars: к точкам гистограмм прикрепляется TraceId запроса, который дал замер.
+                    // TraceBased пишет exemplar только если замер сделан внутри засемплированного span-а
+                    .SetExemplarFilter(ExemplarFilterType.TraceBased)
                     // View позволяет переопределить настройки метрики:
                     .AddView(
                         "payment_amount",
@@ -70,12 +74,25 @@ public static class ServiceCollectionExtensions
                     .AddAspNetCoreInstrumentation()
                     // Регистрируем наш доменный ActivitySource. Без AddSource его span-ы будут проигнорированы.
                     .AddSource(PaymentTracing.ActivitySourceName)
-                    // Sampling решает, какие trace-ы записать. Для демо берем все (AlwaysOn).
+                    // Sampling решает, какие trace-ы записать.
                     // ParentBased гарантирует консистентность: если родитель засемплирован - ребенок тоже.
                     // Обычно: используют head-sampling (доля, напр. 10%) или tail-sampling
                     // на Collector-е (записать только медленные/ошибочные trace-ы) ради объема хранилища.
                     .SetSampler(new ParentBasedSampler(new AlwaysOnSampler()))
                     .AddOtlpExporter();
+            });
+
+            // Логи идут через тот же unified-builder, поэтому делят Resource (service.name и пр.) с метриками
+            // и трейсами. Провайдер - мост: каждый ILogger-запись превращается в OTLP log record. Главное -
+            // если запись сделана внутри активного Activity, в нее автоматически попадают TraceId/SpanId.
+            // Именно это связывает логи с трейсами (pivot span <-> logs в Grafana) без нашего ручного кода.
+            openTelemetry.WithLogging(logging => logging.AddOtlpExporter());
+
+            services.Configure<OpenTelemetryLoggerOptions>(options =>
+            {
+                options.IncludeScopes = true;
+                options.IncludeFormattedMessage = true;
+                options.ParseStateValues = true;
             });
         }
 

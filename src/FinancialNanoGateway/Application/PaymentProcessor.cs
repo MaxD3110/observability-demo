@@ -1,10 +1,7 @@
 using FinancialNanoGateway.Application.Abstractions;
-using FinancialNanoGateway.Domain.Exceptions;
-using FinancialNanoGateway.Domain.Models;
+using FinancialNanoGateway.Application.Logging;
 using System.Diagnostics;
 using FinancialNanoGateway.Application.Dtos;
-using Microsoft.Extensions.Hosting;
-using Microsoft.Extensions.Logging;
 
 namespace FinancialNanoGateway.Application;
 
@@ -45,6 +42,15 @@ public sealed class PaymentProcessor : BackgroundService
 
         // CONSUMER-span: новый trace, связанный link-ом с producer-ом (контекст берется из заголовков).
         using var activity = _tracing.StartProcess(payment, messageEnvelopeDto.Headers);
+
+        // Scope добавляет PaymentId/Currency ко ВСЕМ логам внутри (включая логи банковского сервиса),
+        // не таская их явно в каждый вызов. С IncludeScopes они становятся атрибутами лога в Loki.
+        using var scope = _logger.BeginScope(new Dictionary<string, object>
+        {
+            ["PaymentId"] = payment.Id,
+            ["Currency"] = payment.Currency
+        });
+
         _metrics.PaymentProcessingStarted(payment);
 
         try
@@ -53,7 +59,7 @@ public sealed class PaymentProcessor : BackgroundService
             await _bankIntegrationServices[index].ProcessPaymentAsync(payment, cancellationToken);
 
             _metrics.PaymentProcessingCompleted(payment, stopwatch.Elapsed);
-            _logger.LogInformation("Payment processed. PaymentId={PaymentId}", payment.Id);
+            PaymentLog.PaymentProcessed(_logger, payment.Id, stopwatch.Elapsed.TotalMilliseconds);
         }
         catch (Exception exception)
         {
@@ -61,7 +67,7 @@ public sealed class PaymentProcessor : BackgroundService
             activity?.AddException(exception);
 
             _metrics.PaymentProcessingFailed(payment, exception.GetType().Name, stopwatch.Elapsed);
-            _logger.LogWarning(exception, "Payment failed. PaymentId={PaymentId}", payment.Id);
+            PaymentLog.PaymentProcessingFailed(_logger, exception, payment.Id, exception.GetType().Name);
         }
         finally
         {
