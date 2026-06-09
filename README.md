@@ -1,9 +1,12 @@
-[![LinkedIn][linkedin-shield]][linkedin-url] [![GitHub][github-shield]][github-url] [![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-000?logo=opentelemetry&logoColor=fff)](#)
+
+[![GitHub](https://img.shields.io/badge/GitHub-%23121011.svg?logo=github&logoColor=white)](https://github.com/MaxD3110)
+[![LinkedIn](https://custom-icon-badges.demolab.com/badge/LinkedIn-0A66C2?logo=linkedin-white&logoColor=fff)](https://www.linkedin.com/in/maxim-anisavets/)
+
 <div id="readme-top"></div>
 
 # Financial Nano-Gateway: Observability Demo
-
----
+[![C#](https://custom-icon-badges.demolab.com/badge/C%23-%23239120.svg?logo=cshrp&logoColor=white)](#)
+[![OpenTelemetry](https://img.shields.io/badge/OpenTelemetry-000?logo=opentelemetry&logoColor=fff)](#)
 
 ## Quick start
 
