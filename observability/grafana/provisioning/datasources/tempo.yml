@@ -1,0 +1,19 @@
+# Grafana автоматически создает datasource Tempo при старте.
+apiVersion: 1
+
+datasources:
+  - name: Tempo
+    uid: tempo
+    type: tempo
+    access: proxy
+    url: http://tempo:3200
+    editable: false
+    jsonData:
+      # Корреляция между пилларами настраивается здесь. Заготовка под фазу логов:
+      # tracesToLogsV2 свяжет span -> логи в Loki, tracesToMetrics -> exemplar-ы в Prometheus.
+      # tracesToLogsV2:
+      #   datasourceUid: loki
+      # tracesToMetrics:
+      #   datasourceUid: prometheus
+      nodeGraph:
+        enabled: true

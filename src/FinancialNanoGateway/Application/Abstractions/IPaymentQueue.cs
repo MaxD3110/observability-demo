@@ -1,4 +1,4 @@
-using FinancialNanoGateway.Domain.Models;
+using FinancialNanoGateway.Application.Dtos;
 
 namespace FinancialNanoGateway.Application.Abstractions;
 
@@ -6,7 +6,7 @@ public interface IPaymentQueue
 {
     int Count { get; }
 
-    ValueTask EnqueueAsync(Payment payment, CancellationToken cancellationToken);
+    ValueTask EnqueueAsync(PaymentMessageEnvelopeDto messageEnvelopeDto, CancellationToken cancellationToken);
 
-    IAsyncEnumerable<Payment> ReadAllAsync(CancellationToken cancellationToken);
+    IAsyncEnumerable<PaymentMessageEnvelopeDto> ReadAllAsync(CancellationToken cancellationToken);
 }

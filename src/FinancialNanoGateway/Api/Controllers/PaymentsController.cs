@@ -1,3 +1,4 @@
+using FinancialNanoGateway.Application;
 using FinancialNanoGateway.Application.Abstractions;
 using FinancialNanoGateway.Application.Dtos;
 using FinancialNanoGateway.Application.Dtos.Response;
@@ -12,11 +13,13 @@ public sealed class PaymentsController : ControllerBase
 {
     private readonly IPaymentQueue _paymentQueue;
     private readonly IPaymentMetrics _metrics;
+    private readonly IPaymentTracing _tracing;
 
-    public PaymentsController(IPaymentQueue paymentQueue, IPaymentMetrics metrics)
+    public PaymentsController(IPaymentQueue paymentQueue, IPaymentMetrics metrics, IPaymentTracing tracing)
     {
         _paymentQueue = paymentQueue;
         _metrics = metrics;
+        _tracing = tracing;
     }
 
     /// <summary>
@@ -44,7 +47,13 @@ public sealed class PaymentsController : ControllerBase
         };
 
         _metrics.PaymentRequested(payment);
-        await _paymentQueue.EnqueueAsync(payment, cancellationToken);
+
+        // Заголовки сообщения - наш carrier для trace-контекста. StartPublish положит сюда traceparent.
+        var headers = new Dictionary<string, string>();
+        using (_tracing.StartPublish(payment, headers))
+        {
+            await _paymentQueue.EnqueueAsync(new PaymentMessageEnvelopeDto(payment, headers), cancellationToken);
+        }
 
         return Accepted(new PaymentResponseDto(payment.Id, "Queued", _paymentQueue.Count));
     }

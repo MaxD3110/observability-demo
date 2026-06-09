@@ -2,6 +2,7 @@
 using FinancialNanoGateway.Infrastructure.Options;
 using OpenTelemetry.Metrics;
 using OpenTelemetry.Resources;
+using OpenTelemetry.Trace;
 
 namespace FinancialNanoGateway;
 
@@ -58,6 +59,22 @@ public static class ServiceCollectionExtensions
                         {
                             Boundaries = [25, 50, 100, 150, 250, 500, 750, 1_000]
                         })
+                    .AddOtlpExporter();
+            });
+
+            openTelemetry.WithTracing(tracing =>
+            {
+                tracing
+                    // Auto-instrumentation: создает SERVER-span на каждый входящий HTTP-запрос.
+                    // Это корень trace-а на стороне запроса, к которому цепляется наш PRODUCER-span.
+                    .AddAspNetCoreInstrumentation()
+                    // Регистрируем наш доменный ActivitySource. Без AddSource его span-ы будут проигнорированы.
+                    .AddSource(PaymentTracing.ActivitySourceName)
+                    // Sampling решает, какие trace-ы записать. Для демо берем все (AlwaysOn).
+                    // ParentBased гарантирует консистентность: если родитель засемплирован - ребенок тоже.
+                    // Обычно: используют head-sampling (доля, напр. 10%) или tail-sampling
+                    // на Collector-е (записать только медленные/ошибочные trace-ы) ради объема хранилища.
+                    .SetSampler(new ParentBasedSampler(new AlwaysOnSampler()))
                     .AddOtlpExporter();
             });
         }

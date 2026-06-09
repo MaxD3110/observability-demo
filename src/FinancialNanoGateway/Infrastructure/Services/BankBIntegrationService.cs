@@ -11,15 +11,22 @@ public sealed class BankBIntegrationService : IBankIntegrationService
 {
     private readonly IOptionsMonitor<BankBIntegrationOptions> _options;
     private readonly IPaymentMetrics _metrics;
+    private readonly IPaymentTracing _tracing;
 
-    public BankBIntegrationService(IOptionsMonitor<BankBIntegrationOptions> options, IPaymentMetrics metrics)
+    public BankBIntegrationService(
+        IOptionsMonitor<BankBIntegrationOptions> options,
+        IPaymentMetrics metrics,
+        IPaymentTracing tracing)
     {
         _options = options;
         _metrics = metrics;
+        _tracing = tracing;
     }
-    
+
     public async Task ProcessPaymentAsync(Payment payment, CancellationToken cancellationToken)
     {
+        using var activity = _tracing.StartBankRequest(payment, _options.CurrentValue.ProviderName);
+        
         var stopwatch = Stopwatch.StartNew();
         var succeeded = false;
 
@@ -40,6 +47,12 @@ public sealed class BankBIntegrationService : IBankIntegrationService
             }
 
             succeeded = true;
+        }
+        catch (Exception exception)
+        {
+            activity?.SetStatus(ActivityStatusCode.Error, exception.Message);
+            activity?.AddException(exception);
+            throw;
         }
         finally
         {

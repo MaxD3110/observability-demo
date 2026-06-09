@@ -1,12 +1,12 @@
 using System.Threading.Channels;
 using FinancialNanoGateway.Application.Abstractions;
-using FinancialNanoGateway.Domain.Models;
+using FinancialNanoGateway.Application.Dtos;
 
 namespace FinancialNanoGateway.Application;
 
 public sealed class PaymentQueue : IPaymentQueue
 {
-    private readonly Channel<Payment> _channel = Channel.CreateUnbounded<Payment>();
+    private readonly Channel<PaymentMessageEnvelopeDto> _channel = Channel.CreateUnbounded<PaymentMessageEnvelopeDto>();
     private readonly IPaymentMetrics _metrics;
     private int _count;
 
@@ -17,32 +17,32 @@ public sealed class PaymentQueue : IPaymentQueue
 
     public int Count => Volatile.Read(ref _count);
 
-    public ValueTask EnqueueAsync(Payment payment, CancellationToken cancellationToken)
+    public ValueTask EnqueueAsync(PaymentMessageEnvelopeDto messageEnvelopeDto, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
         Interlocked.Increment(ref _count);
-        _metrics.PaymentEnqueued(payment);
+        _metrics.PaymentEnqueued(messageEnvelopeDto.Payment);
 
-        if (_channel.Writer.TryWrite(payment))
+        if (_channel.Writer.TryWrite(messageEnvelopeDto))
         {
             return ValueTask.CompletedTask;
         }
 
         Interlocked.Decrement(ref _count);
-        _metrics.PaymentDequeued(payment);
+        _metrics.PaymentDequeued(messageEnvelopeDto.Payment);
 
         throw new InvalidOperationException("Payment queue is not accepting new items.");
     }
 
-    public async IAsyncEnumerable<Payment> ReadAllAsync(
+    public async IAsyncEnumerable<PaymentMessageEnvelopeDto> ReadAllAsync(
         [System.Runtime.CompilerServices.EnumeratorCancellation] CancellationToken cancellationToken)
     {
-        await foreach (var payment in _channel.Reader.ReadAllAsync(cancellationToken))
+        await foreach (var message in _channel.Reader.ReadAllAsync(cancellationToken))
         {
             Interlocked.Decrement(ref _count);
-            _metrics.PaymentDequeued(payment);
-            yield return payment;
+            _metrics.PaymentDequeued(message.Payment);
+            yield return message;
         }
     }
 }

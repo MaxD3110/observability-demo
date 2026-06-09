@@ -18,6 +18,7 @@ builder.Services.AddSingleton<IBankIntegrationService, BankBIntegrationService>(
 
 builder.Services.AddSingleton<IPaymentQueue, PaymentQueue>();
 builder.Services.AddSingleton<IPaymentMetrics, PaymentMetrics>();
+builder.Services.AddSingleton<IPaymentTracing, PaymentTracing>();
 builder.Services.AddHostedService<PaymentProcessor>();
 
 var app = builder.Build();
