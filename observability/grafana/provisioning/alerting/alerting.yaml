@@ -1,6 +1,25 @@
-﻿# Grafana загружает правила алертов, без ручной настройки через UI.
+﻿# Grafana загружает правила алертов, контактные точки и шаблоны уведомлений без ручной настройки через UI.
 
 apiVersion: 1
+
+# 0. Шаблон уведомления.
+# Без него Telegram присылает дефолтный дамп полей ([no value], Labels, Silence URL и т.д.).
+# Здесь делаем короткое читаемое сообщение в HTML.
+templates:
+  - orgId: 1
+    name: telegram.message
+    template: |
+      {{ define "telegram.message" -}}
+      {{ if eq .Status "firing" }}🔴 <b>ТРЕВОГА</b>{{ else }}✅ <b>ВОССТАНОВЛЕНО</b>{{ end }} · {{ .Alerts | len }}
+      {{ range .Alerts -}}
+      ━━━━━━━━━━━━━━
+      <b>{{ .Labels.alertname }}</b>
+      {{ if .Labels.provider }}Провайдер: <b>{{ .Labels.provider }}</b>
+      {{ end }}{{ if .Annotations.summary }}{{ .Annotations.summary }}
+      {{ end }}Важность: {{ .Labels.severity }}
+      {{ if .DashboardURL }}<a href="{{ .DashboardURL }}">Открыть дашборд</a>{{ end }}
+      {{ end -}}
+      {{ end }}
 
 # 1. Контактные точки (Contact Points)
 contactPoints:
@@ -11,15 +30,17 @@ contactPoints:
         type: telegram
         disableResolveMessage: false # Присылать уведомление, когда всё починилось
         settings:
-          bottoken: "8670180279:AAH6aBAma7R5tDztqoAKZoQ83IYAqjsGXCI"
+          bottoken: "$__env{TELEGRAM_BOT_TOKEN}"
           chatid: "8378060934"
+          parse_mode: "HTML"
+          message: '{{ template "telegram.message" . }}'
 
 # 2. Политики уведомлений (Notification Policies)
 # Это логика: какой алерт куда отправлять
 policies:
   - orgId: 1
     receiver: "Telegram Receiver"
-    group_by: ["alertname", "grafana_folder", "provider"]
+    group_by: ["alertname", "provider"]
     group_wait: 10s      # Сколько ждать перед первой отправкой
     group_interval: 1m   # Пауза перед отправкой новых алертов в той же группе
     repeat_interval: 1h  # Как часто напоминать об активном алерте
@@ -32,7 +53,8 @@ groups:
     interval: 10s
     rules:
       - uid: bank_failure_id
-        title: 'Высокий % ошибочных исходов по банкам {{ $labels.provider }}'
+        # Заголовок статичный: в title Grafana НЕ подставляет $labels. Провайдер уходит в аннотацию и метки.
+        title: 'Высокий % ошибочных исходов по банку'
         condition: C
         for: 1m
         data:
@@ -44,10 +66,14 @@ groups:
                 type: prometheus
                 uid: prometheus
               editorMode: code
-              expr: 100 * sum by (provider) (rate(bank_request_value_total{outcome="failed"}[$__rate_interval])) / clamp_min(sum by (provider) (rate(bank_request_value_total[$__rate_interval])), 0.001)
+              # NoData-устойчивый запрос. Проблема исходной версии: при нуле ошибок у провайдера
+              # числитель (outcome="failed") не возвращал серию -> деление давало пустоту -> DatasourceNoData.
+              # Приём `or (<знаменатель> * 0)` гарантирует 0 для каждого провайдера, у кого есть трафик.
+              # Интервал зафиксирован [5m] вместо $__rate_interval - детерминированно и совпадает с окном 300s.
+              expr: '100 * (sum by (provider) (rate(bank_request_value_total{outcome="failed"}[5m])) or (sum by (provider) (rate(bank_request_value_total[5m])) * 0)) / clamp_min(sum by (provider) (rate(bank_request_value_total[5m])), 0.001)'
               instant: true
               intervalMs: 10000
-              legendFormat: '{{provider}} % ошибок'
+              legendFormat: '{{provider}}'
               refId: B
           - refId: C
             queryType: expression
@@ -74,9 +100,11 @@ groups:
               type: threshold
         dashboardUid: adxhhjv
         panelId: 43
-        noDataState: NoData
+        # Запрос теперь всегда возвращает значение, поэтому "нет данных" = реально мёртвый источник, а не норма.
+        noDataState: OK
         execErrState: Error
         annotations:
+          summary: 'Доля ошибочных исходов {{ $values.B.Value | printf "%.1f" }}% за 5 минут (порог 10%).'
           __dashboardUid__: adxhhjv
           __panelId__: "43"
         labels:

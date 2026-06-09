@@ -103,6 +103,8 @@ services:
       GF_SECURITY_ADMIN_PASSWORD: 12345
       GF_AUTH_ANONYMOUS_ENABLED: "true" # Гостевой режим, не требует логиниться в UI
       GF_USERS_ALLOW_SIGN_UP: "false" # Запрещает регистрацию новых юзеров из UI
+      # Секрет алертинга (bot token) прокидывается из .env (в .gitignore), нигде не хранится
+      TELEGRAM_BOT_TOKEN: ${TELEGRAM_BOT_TOKEN:-}
     volumes:
       - grafana-data:/var/lib/grafana
       - ./observability/grafana/provisioning:/etc/grafana/provisioning:ro
