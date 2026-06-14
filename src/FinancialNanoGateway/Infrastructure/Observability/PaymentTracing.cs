@@ -35,7 +35,14 @@ public sealed class PaymentTracing : IPaymentTracing
         SetMessagingTags(activity, operation: "publish");
         SetPaymentTags(activity, payment);
 
+        // Baggage = business context that rides along the WHOLE trace. We set it here at the edge so
+        // downstream services can read it without it being part of the message body. (Illustrative:
+        // in a real system baggage usually carries an inbound value like a tenant id or feature flag.)
+        var priority = payment.Amount >= 10_000m ? "high" : "normal";
+        Baggage.Current = Baggage.Current.SetBaggage("payment.priority", priority);
+
         // The key moment: we put the CURRENT span's context into the message headers.
+        // Inject carries BOTH the span context (traceparent) and the baggage we just set.
         var contextToInject = activity?.Context ?? Activity.Current?.Context ?? default;
         Propagator.Inject(new PropagationContext(contextToInject, Baggage.Current), headers, InjectHeader);
 
@@ -62,6 +69,11 @@ public sealed class PaymentTracing : IPaymentTracing
         SetMessagingTags(activity, operation: "process");
         SetPaymentTags(activity, payment);
 
+        // The payoff: the baggage the producer set crossed the async boundary inside the headers.
+        // We read it back here - without the producer re-passing it - and surface it on the span.
+        // That cross-span propagation is exactly what distinguishes baggage from a tag (one span).
+        activity?.SetTag("payment.priority", Baggage.GetBaggage("payment.priority"));
+
         return activity;
     }
 
@@ -79,9 +91,7 @@ public sealed class PaymentTracing : IPaymentTracing
     private static void SetMessagingTags(Activity? activity, string operation)
     {
         if (activity is null)
-        {
             return;
-        }
 
         activity.SetTag("messaging.system", MessagingSystem);
         activity.SetTag("messaging.destination.name", DestinationName);
@@ -91,9 +101,7 @@ public sealed class PaymentTracing : IPaymentTracing
     private static void SetPaymentTags(Activity? activity, Payment payment)
     {
         if (activity is null)
-        {
             return;
-        }
 
         // IMPORTANT (and the opposite of metrics!): in traces, high cardinality is good.
         // In PaymentMetrics we did NOT add payment.Id/amount, to avoid exploding the number of time series in Prometheus.

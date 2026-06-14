@@ -56,7 +56,16 @@ public sealed class PaymentProcessor : BackgroundService
         try
         {
             var index = Random.Shared.Next(_bankIntegrationServices.Length);
-            await _bankIntegrationServices[index].ProcessPaymentAsync(payment, cancellationToken);
+            var bank = _bankIntegrationServices[index];
+
+            // A span EVENT is a timestamped moment INSIDE the span (when something happened),
+            // distinct from a TAG, which is an attribute describing the whole span. (AddException
+            // below is just a special, well-known event - this shows the general form.)
+            activity?.AddEvent(new ActivityEvent(
+                "bank.dispatch",
+                tags: new ActivityTagsCollection { ["bank.provider"] = bank.GetType().Name }));
+
+            await bank.ProcessPaymentAsync(payment, cancellationToken);
 
             _metrics.PaymentProcessingCompleted(payment, stopwatch.Elapsed);
             PaymentLog.PaymentProcessed(_logger, payment.Id, stopwatch.Elapsed.TotalMilliseconds);

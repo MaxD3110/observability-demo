@@ -6,22 +6,23 @@ namespace FinancialNanoGateway.Application;
 
 public sealed class PaymentQueue : IPaymentQueue
 {
-    private readonly Channel<PaymentMessageEnvelopeDto> _channel = Channel.CreateUnbounded<PaymentMessageEnvelopeDto>();
+    private readonly Channel<PaymentMessageEnvelopeDto> _channel;
     private readonly IPaymentMetrics _metrics;
-    private int _count;
 
-    public PaymentQueue(IPaymentMetrics metrics)
+    public PaymentQueue(Channel<PaymentMessageEnvelopeDto> channel, IPaymentMetrics metrics)
     {
+        _channel = channel;
         _metrics = metrics;
     }
 
-    public int Count => Volatile.Read(ref _count);
+    // The channel already tracks its own length, so we read it directly instead of
+    // hand-maintaining a parallel counter. This is the same source the observable gauge reads.
+    public int Count => _channel.Reader.Count;
 
     public ValueTask EnqueueAsync(PaymentMessageEnvelopeDto messageEnvelopeDto, CancellationToken cancellationToken)
     {
         cancellationToken.ThrowIfCancellationRequested();
 
-        Interlocked.Increment(ref _count);
         _metrics.PaymentEnqueued(messageEnvelopeDto.Payment);
 
         if (_channel.Writer.TryWrite(messageEnvelopeDto))
@@ -29,7 +30,6 @@ public sealed class PaymentQueue : IPaymentQueue
             return ValueTask.CompletedTask;
         }
 
-        Interlocked.Decrement(ref _count);
         _metrics.PaymentDequeued(messageEnvelopeDto.Payment);
 
         throw new InvalidOperationException("Payment queue is not accepting new items.");
@@ -40,7 +40,6 @@ public sealed class PaymentQueue : IPaymentQueue
     {
         await foreach (var message in _channel.Reader.ReadAllAsync(cancellationToken))
         {
-            Interlocked.Decrement(ref _count);
             _metrics.PaymentDequeued(message.Payment);
             yield return message;
         }

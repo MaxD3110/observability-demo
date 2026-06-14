@@ -1,6 +1,8 @@
 using System.Diagnostics;
 using System.Diagnostics.Metrics;
+using System.Threading.Channels;
 using FinancialNanoGateway.Application.Abstractions;
+using FinancialNanoGateway.Application.Dtos;
 using FinancialNanoGateway.Domain.Models;
 
 namespace FinancialNanoGateway.Infrastructure.Observability;
@@ -26,16 +28,13 @@ public sealed class PaymentMetrics : IPaymentMetrics
     private readonly Histogram<double> _paymentQueueWaitDuration;
     private readonly Histogram<double> _paymentProcessingDuration;
     private readonly Histogram<double> _bankRequestDuration;
+    private readonly UpDownCounter<int> _activeProcessing;
 
-    // Observable instruments must live as long as the Meter, so we keep references in fields
-    // even if we never access them directly afterwards.
+    // Observable instrument: its callback is pulled at scrape time, so the reference must live
+    // as long as the Meter even though we never touch it directly again.
     private readonly ObservableGauge<int> _queueDepth;
-    private readonly ObservableGauge<int> _activeProcessing;
 
-    private int _currentQueueDepth;
-    private int _currentActiveProcessing;
-
-    public PaymentMetrics(IMeterFactory meterFactory)
+    public PaymentMetrics(IMeterFactory meterFactory, ChannelReader<PaymentMessageEnvelopeDto> queueReader)
     {
         var meter = meterFactory.Create(MeterName);
 
@@ -88,17 +87,23 @@ public sealed class PaymentMetrics : IPaymentMetrics
             unit: "ms",
             description: "Duration of the call to the bank provider.");
 
-        // Gauge shows the current state of the system. Unlike a Counter, its value can go up and down.
-        // Here we use the observable variant because the metric reflects state (pull), not an event (push).
+        // Two ways to track a "current level", and the demo shows both side by side:
+        //
+        // ObservableGauge = PULL. The SDK invokes this callback at scrape time to READ state we have
+        // no event for. The channel already knows its own length, so we just sample Reader.Count -
+        // no per-change bookkeeping. This is the right tool when you can read a value on demand but
+        // don't have (or don't want to instrument) the individual events that change it.
         _queueDepth = meter.CreateObservableGauge(
             "payment_queue_depth",
-            () => Math.Max(0, Volatile.Read(ref _currentQueueDepth)),
+            () => queueReader.CanCount ? queueReader.Count : 0,
             unit: "{payment}",
             description: "Current number of payments waiting to be processed.");
 
-        _activeProcessing = meter.CreateObservableGauge(
+        // UpDownCounter = PUSH. We record +1/-1 inline because we ARE standing at the start/end
+        // events (PaymentProcessingStarted/Completed/Failed). When you already sit on the events,
+        // a synchronous instrument is simpler than maintaining state behind an observable callback.
+        _activeProcessing = meter.CreateUpDownCounter<int>(
             "payment_active_processing",
-            () => Math.Max(0, Volatile.Read(ref _currentActiveProcessing)),
             unit: "{payment}",
             description: "Current number of payments being processed right now.");
     }
@@ -113,14 +118,12 @@ public sealed class PaymentMetrics : IPaymentMetrics
 
     public void PaymentEnqueued(Payment payment)
     {
-        Interlocked.Increment(ref _currentQueueDepth);
+        // No queue-depth bookkeeping here: the observable gauge reads the channel's own count.
         _paymentEnqueued.Add(1, CreatePaymentTags(payment));
     }
 
     public void PaymentDequeued(Payment payment)
     {
-        Interlocked.Decrement(ref _currentQueueDepth);
-
         var queueWaitDuration = DateTime.UtcNow - payment.CreatedAt;
         if (queueWaitDuration >= TimeSpan.Zero)
         {
@@ -130,12 +133,12 @@ public sealed class PaymentMetrics : IPaymentMetrics
 
     public void PaymentProcessingStarted(Payment payment)
     {
-        Interlocked.Increment(ref _currentActiveProcessing);
+        _activeProcessing.Add(1);
     }
 
     public void PaymentProcessingCompleted(Payment payment, TimeSpan duration)
     {
-        Interlocked.Decrement(ref _currentActiveProcessing);
+        _activeProcessing.Add(-1);
 
         var tags = CreatePaymentTags(payment, outcome: SuccessOutcome);
         _paymentProcessed.Add(1, tags);
@@ -145,7 +148,7 @@ public sealed class PaymentMetrics : IPaymentMetrics
 
     public void PaymentProcessingFailed(Payment payment, string reason, TimeSpan duration)
     {
-        Interlocked.Decrement(ref _currentActiveProcessing);
+        _activeProcessing.Add(-1);
 
         var outcomeTags = CreatePaymentTags(payment, outcome: FailedOutcome);
         var failureTags = CreatePaymentTags(payment, reason: reason);

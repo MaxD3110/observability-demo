@@ -12,7 +12,7 @@
 
 The project works out of the box. The infrastructure (Prometheus + Tempo + Loki + Grafana) is wired up via **provisioning**.
 
-1. **Run:**
+1. **Run this in a project directory:**
    ```bash
    docker-compose up -d
 
@@ -45,16 +45,25 @@ The project follows the **Explicit Metrics** principle - metrics are part of the
 
 ## Monitoring data model
 
-The project demonstrates the three fundamental metric types:
+The project defines ~12 instruments (see [`PaymentMetrics.cs`](src/FinancialNanoGateway/Infrastructure/Observability/PaymentMetrics.cs)); the table below is an illustrative slice covering each instrument family:
 
 | Metric | Type | What it measures |
 | :--- | :--- | :--- |
-| `payment_processed_total` | **Counter** | Total count and volume of transactions (filterable by `currency`, `provider`, `status`). |
-| `payment_processing_duration_ms` | **Histogram** | Percentiles (p95, p99) of processing time. Hunting for outliers and lags. |
-| `payment_queue_depth` | **UpDownCounter** | Current number of payments in the queue. A backpressure / overload indicator. |
+| `payment_processed` | **Counter** | Monotonic count of processed transactions (filterable by `currency`, `outcome`). |
+| `payment_processing_duration` | **Histogram** | Distribution / percentiles (p95, p99) of processing time. Hunting for outliers and lags. |
+| `payment_active_processing` | **UpDownCounter** | Payments being processed right now - a value that goes up and down. |
+| `payment_queue_depth` | **Observable Gauge** | Current number of payments waiting in the queue. A backpressure / overload indicator. |
 
+### Synchronous vs observable instruments
 
-I tried to cover as many metric types and usage scenarios as possible. The important points are explained in code comments - what's worth paying attention to.
+The last two rows both track a "current level" but pick **opposite** instrument families on purpose - this is the distinction worth internalizing:
+
+* **Synchronous** (`Counter`, `Histogram`, `UpDownCounter`) - you record the measurement **inline, at the exact line where the event happens** (*push*). `payment_active_processing` does `Add(+1)`/`Add(-1)` at the start/end of processing, because the code is already standing on those events.
+* **Observable** (`ObservableGauge`, `ObservableCounter`, `ObservableUpDownCounter`) - you hand the SDK a **callback that reads a current value on demand**, invoked when the collector scrapes (*pull*). `payment_queue_depth` just samples the channel's own `Reader.Count`; there is no per-change event to hook, and reading the value when asked is simpler than instrumenting every enqueue/dequeue.
+
+Rule of thumb: reach for an **observable** instrument when you can *read* a value on demand but don't have (or don't want to instrument) the individual events that change it - runtime stats (CPU, memory, GC), pool/cache sizes, a queue length read from the queue itself.
+
+The important points are explained in code comments - what's worth paying attention to.
 
 ---
 
@@ -64,15 +73,27 @@ End-to-end tracing via **OpenTelemetry -> Tempo**. The key thing being demonstra
 
 The queue is treated as a message broker: the trace context (W3C `traceparent`) travels in the envelope headers, exactly as it would with Kafka/RabbitMQ. Following the messaging convention, the producer and consumer are separate traces joined by a **span link** (PRODUCER -> CONSUMER -> CLIENT). Unlike metrics, spans deliberately carry high-cardinality fields (`payment.id`, the exact amount) - a span is a single request, not an aggregate, and the more context per request, the faster the debugging. Errors are recorded right on the span - in Tempo that's a red span with a stack trace.
 
+A span also carries two things beyond tags: **events** (`bank.dispatch` - a timestamped checkpoint *inside* a span, marking *when* something happened) and **baggage** - a `payment.priority` value set at the edge that rides across the async boundary so the consumer can read it without the producer re-passing it.
+
 ![Tracing Demo](./assets/5.png)
 
 ---
 
 ## Logs (Structured Logging)
 
-Structured logs via `ILogger` -> **OpenTelemetry -> Loki**. They are written through source-generated `[LoggerMessage]` methods - the logging counterpart of the **Zero Allocation** story from the metrics. `BeginScope` mixes context (`PaymentId`) into all nested logs without passing it by hand.
+Logs go via `ILogger` -> **OpenTelemetry -> Loki**.
 
-The same cardinality discipline applies here: only low-cardinality fields (`service_name`) become Loki **labels**, while `trace_id` and `payment.id` go to **structured metadata**.
+**Structured logging.** Instead of baking values into a finished string, you log a *message template with named fields* (`"Payment processed. PaymentId={PaymentId}, DurationMs={DurationMs}"`). The values travel as data, so in Loki you can filter and aggregate on them (`DurationMs > 1000`) instead of grepping prose. The anti-pattern is string interpolation (`$"...{id}..."`), which flattens everything into one opaque string *before* it's logged, throwing the structure away.
+
+**Log levels are a cost/verbosity dial.** `BankRequestStarting` is a `Debug` line; production runs at `Information`, so it is **never emitted in prod**. That's the point - you instrument richly at `Debug` and only pay the volume/cost/noise when you raise the level to chase a problem. "Invisible in prod" is the feature, not a bug.
+
+**Scopes.** `BeginScope` attaches `PaymentId`/`Currency` to *every* log inside the block (including the bank service's logs) without threading them through each call.
+
+**Formatted message vs fields.** The rendered message string is for a human skimming logs; in production you query on the **fields** and the `EventId`, not the prose (the demo ships both via `IncludeFormattedMessage`).
+
+**`[LoggerMessage]` source generator.** This is an *optimization layered on top of* normal structured logging, not a different way of logging. The generator expands each call at compile time into allocation-free code: no boxing, no `params object[]`, no template parsing at runtime, and the level is checked *before* the arguments are evaluated - the logging counterpart of the zero-allocation `TagList` story from the metrics. Compare the plain `logger.LogWarning(...)` in [`PaymentsController.cs`](src/FinancialNanoGateway/Api/Controllers/PaymentsController.cs) with the source-generated version of the same idea in [`PaymentLog.cs`](src/FinancialNanoGateway/Application/Logging/PaymentLog.cs).
+
+**Cardinality discipline** (same as metrics): only low-cardinality fields (`service_name`) become Loki **labels**, while `trace_id` and `payment.id` go to **structured metadata**.
 
 ![Logs Demo](./assets/7.png)
 

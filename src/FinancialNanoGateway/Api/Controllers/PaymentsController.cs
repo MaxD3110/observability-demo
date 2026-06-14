@@ -40,11 +40,15 @@ public sealed class PaymentsController : ControllerBase
         PaymentRequestDto requestDto,
         CancellationToken cancellationToken)
     {
-        if (requestDto.Amount <= 0)
-            return BadRequest("Amount must be greater than zero.");
+        var rejectReason = ValidateRequest(requestDto);
 
-        if (string.IsNullOrWhiteSpace(requestDto.Currency))
-            return BadRequest("Currency is required.");
+        if (!string.IsNullOrEmpty(rejectReason))
+        {
+            // Plain structured logging: the same named-placeholder idea as PaymentLog, but written by
+            // hand. PaymentLog shows the source-generated, allocation-free version used on hot paths.
+            _logger.LogError("Payment rejected. Reason={Reason}", rejectReason);
+            return BadRequest(rejectReason);
+        }
 
         var payment = new Payment
         {
@@ -64,5 +68,16 @@ public sealed class PaymentsController : ControllerBase
         PaymentLog.PaymentAccepted(_logger, payment.Id, payment.Currency);
 
         return Accepted(new PaymentResponseDto(payment.Id, "Queued", _paymentQueue.Count));
+    }
+
+    private static string? ValidateRequest(PaymentRequestDto requestDto)
+    {
+        if (requestDto.Amount <= 0)
+            return "Amount must be greater than zero.";
+
+        if (string.IsNullOrWhiteSpace(requestDto.Currency))
+            return "Currency is required.";
+
+        return null;
     }
 }
